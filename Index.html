@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geopolitical Risk Radar — CRO Forum 2026</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #060d1a;
+  color: #e2e8f0;
+  font-family: sans-serif;
+  min-height: 100vh;
+  padding: 20px;
+  user-select: none;
+}
+button {
+  font-family: sans-serif;
+  cursor: pointer;
+}
+#header {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+#header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.5px;
+}
+#header .sub1 {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #3b82f6;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+#header .sub2 {
+  font-size: 10.5px;
+  color: #475569;
+  margin-top: 3px;
+}
+#controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.toggle-group {
+  background: #0f1c2e;
+  border-radius: 8px;
+  padding: 3px;
+  display: flex;
+  border: 1px solid #1e3a5f;
+}
+.toggle-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 10px;
+  font-weight: 600;
+  background: transparent;
+  color: #64748b;
+  transition: all .2s;
+}
+.toggle-btn.active {
+  background: #1d4ed8;
+  color: #fff;
+}
+.toggle-btn.active-worst {
+  background: #b91c1c;
+  color: #fff;
+}
+#main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  transition: grid-template-columns .3s;
+}
+#main.with-panel {
+  grid-template-columns: 1fr 330px;
+}
+#radar-box {
+  background: #0a1628;
+  border: 1px solid #1e3a5f;
+  border-radius: 14px;
+  padding: 14px 6px 10px;
+  position: relative;
+}
+#scenario-badge {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 9px;
+  border-radius: 5px;
+  padding: 3px 8px;
+  display: none;
+}
+#radar-svg {
+  display: block;
+  width: 100%;
+}
+#ring-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 6px;
+  font-size: 8.5px;
+  flex-wrap: wrap;
+  color: #334155;
+  font-family: monospace;
+}
+#ring-legend span b { color: #3b82f6; }
+#bottom-legend {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: #0a1628;
+  border-radius: 10px;
+  border: 1px solid #1e3a5f;
+  font-size: 9.5px;
+  align-items: center;
+}
+.leg-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.leg-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.leg-sep {
+  width: 1px; height: 14px;
+  background: #1e3a5f;
+  margin: 0 4px;
+}
+.leg-label { color: #334155; font-weight: 600; font-size: 9px; }
+.leg-item { color: #475569; display: flex; align-items: center; }
+
+/* DETAIL PANEL */
+#panel {
+background: #0a1628;
+border: 1px solid #1e3a5f;
+border-radius: 14px;
+padding: 18px;
+display: flex;
+flex-direction: column;
+gap: 13px;
+overflow-y: auto;
+max-height: 680px;
+display: none;
+}
+#panel.visible { display: flex; }
+.panel-cat {
+font-size: 8.5px;
+letter-spacing: 2px;
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+.panel-title {
+font-size: 13px;
+font-weight: 700;
+color: #f1f5f9;
+line-height: 1.35;
+margin-bottom: 6px;
+}
+.score-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 8px;
+}
+.score-card {
+border-radius: 8px;
+padding: 10px 12px;
+}
+.score-card .sc-lbl { font-size: 8.5px; color: #475569; margin-bottom: 3px; }
+.score-card .sc-val { font-size: 26px; font-weight: 700; line-height: 1; }
+.score-card .sc-th  { font-size: 8.5px; color: #334155; margin-top: 4px; }
+.delta-badge {
+border-radius: 7px;
+padding: 7px 12px;
+font-size: 10px;
+text-align: center;
+font-weight: 600;
+}
+.note-box {
+background: #0f1c2e;
+border: 1px solid #1e3a5f;
+border-radius: 8px;
+padding: 10px 12px;
+font-size: 9px;
+color: #64748b;
+line-height: 1.6;
+font-style: italic;
+}
+.note-box b { color: #334155; font-style: normal; }
+.spider-label {
+font-size: 9px;
+color: #475569;
+margin-bottom: 4px;
+}
+.indicator-table {
+font-size: 9.5px;
+}
+.ind-header {
+display: grid;
+grid-template-columns: 1fr 30px 30px 30px;
+gap: 3px;
+color: #334155;
+padding-bottom: 5px;
+border-bottom: 1px solid #1e3a5f;
+margin-bottom: 4px;
+}
+.ind-row {
+display: grid;
+grid-template-columns: 1fr 30px 30px 30px;
+gap: 3px;
+padding: 2px 0;
+align-items: center;
+}
+.ind-name { color: #64748b; font-size: 8.5px; }
+.ind-val  { text-align: center; font-weight: 600; }
+.ind-delta{ text-align: center; font-size: 8.5px; font-weight: 600; }
+.panel-close {
+background: none;
+border: none;
+color: #475569;
+font-size: 18px;
+padding: 0;
+line-height: 1;
+margin-left: 8px;
+cursor: pointer;
+}
+.panel-top-row {
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+}
+
+/* Tooltip */
+#tooltip {
+position: fixed;
+background: #0f1c2e;
+border: 1px solid #1e3a5f;
+border-radius: 6px;
+padding: 6px 10px;
+font-size: 11px;
+color: #e2e8f0;
+pointer-events: none;
+z-index: 9999;
+display: none;
+max-width: 180px;
+line-height: 1.5;
+}
+</style>
+
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <div class="sub1">CRO Forum · Insurance Sector · March 2026</div>
+    <h1>Geopolitical Risk Radar</h1>
+    <div class="sub2">Distance from centre = time horizon &nbsp;|&nbsp; Bubble size = impact score &nbsp;|&nbsp; Colour = trigger category</div>
+  </div>
+  <div id="controls">
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btn-base" onclick="setScenario('base')">Base Case</button>
+      <button class="toggle-btn" id="btn-worst" onclick="setScenario('worst')">Worst Case</button>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="radar-box">
+    <div id="scenario-badge"></div>
+    <svg id="radar-svg" viewBox="0 0 620 620"></svg>
+    <div id="ring-legend">
+      <span><b>9m</b> Near-term</span>
+      <span><b>12m</b> Short</span>
+      <span><b>18m</b> Medium</span>
+      <span><b>24m</b> Long</span>
+      <span><b>36m</b> Distant</span>
+    </div>
+  </div>
+  <div id="panel"></div>
+</div>
+
+<div id="bottom-legend">
+  <span class="leg-label">TRIGGER:</span>
+  <div class="leg-section" id="wedge-legend"></div>
+  <div class="leg-sep"></div>
+  <span class="leg-item" style="margin-left:auto">
+    <span style="display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px dashed #64748b;margin-right:4px"></span>
+    Upside scenario
+  </span>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+var W = 620, H = 620, CX = 310, CY = 310;
+var R_MIN = 55, R_MAX = 265;
+var TH_MIN = 6, TH_MAX = 38;
+
+var WEDGES = [
+  { id:"MIL", label:"Military",   color:"#E84545" },
+  { id:"FIN", label:"Financial",  color:"#F08030" },
+  { id:"HYB", label:"Hybrid Ops", color:"#D4B800" },
+  { id:"ENE", label:"Energy",     color:"#3AAA6A" },
+  { id:"POL", label:"Political",  color:"#2980B9" },
+  { id:"TEC", label:"Tech",       color:"#9B59B6" },
+];
+
+var INDICATORS = ["Infl/Claims","GDP Growth","Int Rates","Credit Spreads","Commodity","Cyber","Op.Disruption"];
+
+var THEMES = [
+  { id:"T01", wedge:"MIL", upside:false,
+    name:"Major disruption of Middle East energy supply", short:"M.East energy",
+    base:  { score:2.0, th:10, thLabel:"9-12m",   scores:[3,2,1,1,3,1,2] },
+    worst: { score:5.0, th:4,  thLabel:"3-6m",    scores:[5,3,3,4,5,2,4] },
+    baseNote: "Conflict contained, Hormuz operational. Marine and energy lines moderately affected. No systemic disruption.",
+    worstNote: "Direct US engagement. Hormuz closure. Energy shock systemic — inflation hits all lines, Fed constrained.",
+  },
+  { id:"T02", wedge:"MIL", upside:false,
+    name:"Large-scale military escalation in Eastern Europe", short:"E.Europe escalation",
+    base:  { score:2.0, th:20, thLabel:"18-24m",  scores:[2,2,1,2,2,1,1] },
+    worst: { score:4.0, th:7,  thLabel:"6-9m",    scores:[3,4,3,4,3,2,3] },
+    baseNote: "Stalemate holds. Contained sovereign credit stress in CEE, energy costs, industrial supply chain disruption.",
+    worstNote: "US distracted by Iran. Russia sees window. Wider geography affected; sovereign spreads and defence spending shift materially.",
+  },
+  { id:"T03", wedge:"MIL", upside:false,
+    name:"Military escalation in the Taiwan Strait", short:"Taiwan Strait",
+    base:  { score:4.0, th:36, thLabel:"36m+",    scores:[3,4,3,4,3,2,4] },
+    worst: { score:4.0, th:15, thLabel:"12-18m",  scores:[4,5,3,5,4,2,5] },
+    baseNote: "US deterrence intact. Score already high — consequences are severe regardless of timing.",
+    worstNote: "Score unchanged — catastrophic impact is already the base assessment. US distraction compresses timeline.",
+  },
+  { id:"T04", wedge:"FIN", upside:false,
+    name:"Fed independence and US monetary policy shift", short:"Fed & policy shift",
+    base:  { score:3.3, th:9,  thLabel:"9m",      scores:[4,3,5,4,2,1,2] },
+    worst: { score:4.5, th:5,  thLabel:"3-6m",    scores:[5,4,5,5,4,1,3] },
+    baseNote: "New Fed Chair, bear steepening risk live. Duration-matched portfolios under pressure. Own funds volatility elevated.",
+    worstNote: "Fed credibility loss triggers discontinuous bear steepening. USD reserve status questioned. All rate-sensitive lines hit simultaneously.",
+  },
+  { id:"T05", wedge:"FIN", upside:false,
+    name:"US-EU trade war escalation", short:"US-EU tariffs",
+    base:  { score:3.0, th:12, thLabel:"12m",     scores:[4,4,3,3,3,1,3] },
+    worst: { score:4.0, th:7,  thLabel:"6-9m",    scores:[5,5,4,5,4,1,4] },
+    baseNote: "Tariffs at 25%, EU non-coordinated. Actuarial problem: claims inflation on imported goods, industrial supply chain.",
+    worstNote: "Tariffs >35%, EU fails to coordinate. Shifts from actuarial to solvency problem — sovereign bond market stress.",
+  },
+  { id:"T06", wedge:"FIN", upside:false,
+    name:"USD reserve status erosion", short:"USD erosion",
+    base:  { score:2.5, th:24, thLabel:"24m",     scores:[2,2,4,3,2,1,2] },
+    worst: { score:4.0, th:12, thLabel:"12m",     scores:[2,3,5,4,3,1,2] },
+    baseNote: "Gradual diversification away from USD by central banks. Slow-moving structural shift.",
+    worstNote: "Discontinuous confidence loss triggered by debt ceiling crisis or Fed shock. Capital flows reverse rapidly.",
+  },
+  { id:"T07", wedge:"FIN", upside:true,
+    name:"US-EU trade truce (upside)", short:"Trade truce (up)",
+    base:  { score:1.8, th:15, thLabel:"12-18m",  scores:[2,3,2,2,2,1,2] },
+    worst: { score:1.5, th:15, thLabel:"12-18m",  scores:[1,3,2,1,1,1,1] },
+    baseNote: "Partial normalisation attenuates tariff-driven inflation and sovereign spread pressure.",
+    worstNote: "Even in upside scenario, structural supply chain fragmentation already embedded is not reversed.",
+  },
+  { id:"T08", wedge:"HYB", upside:false,
+    name:"Systemic cyber attack on financial infrastructure", short:"Systemic cyber",
+    base:  { score:3.3, th:12, thLabel:"12m",     scores:[3,3,3,4,2,5,5] },
+    worst: { score:4.5, th:6,  thLabel:"6m",      scores:[3,3,3,4,2,5,5] },
+    baseNote: "State-sponsored cyber increasing in frequency. Silent cyber accumulation elevated. Single-entity attacks frequent.",
+    worstNote: "Coordinated multi-institution attack. Systemic silent cyber losses materialise; correlated BI claims across sectors.",
+  },
+  { id:"T09", wedge:"HYB", upside:false,
+    name:"EU dependency on US cloud and IT providers", short:"EU cloud risk",
+    base:  { score:2.4, th:24, thLabel:"18-24m",  scores:[2,2,2,2,1,4,4] },
+    worst: { score:3.0, th:12, thLabel:"12m",     scores:[2,2,2,2,1,4,4] },
+    baseNote: "Geopolitical tensions raise data sovereignty questions. DORA pressure increasing but transition timelines long.",
+    worstNote: "US-EU breakdown triggers abrupt restrictions on cross-border data flows. No viable alternatives in place.",
+  },
+  { id:"T10", wedge:"ENE", upside:false,
+    name:"European energy supply disruption", short:"EU energy",
+    base:  { score:2.5, th:18, thLabel:"18m",     scores:[3,3,2,2,4,1,3] },
+    worst: { score:4.0, th:9,  thLabel:"9m",      scores:[5,4,3,3,5,1,4] },
+    baseNote: "Structural vulnerability remains. Winter demand spikes manageable. Claims inflation from energy costs moderate.",
+    worstNote: "Renewed disruption from Eastern Europe escalation or infrastructure sabotage. Energy prices spike; industrial lines hit.",
+  },
+  { id:"T11", wedge:"ENE", upside:false,
+    name:"China supply chain and rare earth disruption", short:"China REE",
+    base:  { score:2.9, th:12, thLabel:"12m",     scores:[3,3,3,3,3,2,4] },
+    worst: { score:3.5, th:7,  thLabel:"6-9m",    scores:[3,3,3,3,4,3,5] },
+    baseNote: "China restricting critical minerals as leverage. Near-term impact limited to specific industrial sectors.",
+    worstNote: "Significant escalation across REE, semiconductors, critical components. Industrial BI and trade credit become correlated.",
+  },
+  { id:"T12", wedge:"POL", upside:false,
+    name:"European governance fragmentation", short:"EU governance",
+    base:  { score:3.1, th:18, thLabel:"18m",     scores:[2,3,3,4,2,1,2] },
+    worst: { score:4.0, th:9,  thLabel:"9m",      scores:[2,4,4,5,2,1,3] },
+    baseNote: "Far-right gains in key member states but collective EU decision-making functional. Spreads elevated but stable.",
+    worstNote: "Political crisis blocks collective EU response on defence or fiscal. Sovereign spreads widen sharply.",
+  },
+  { id:"T13", wedge:"POL", upside:false,
+    name:"Social unrest and political polarisation in Europe", short:"EU social unrest",
+    base:  { score:2.7, th:18, thLabel:"18m",     scores:[2,3,2,2,2,1,2] },
+    worst: { score:3.3, th:10, thLabel:"9-12m",   scores:[3,4,2,3,3,1,3] },
+    baseNote: "Fiscal consolidation and migration tensions driving localised unrest. Limited direct insurance impact.",
+    worstNote: "Large-scale unrest in multiple countries — property damage, BI losses, operational disruption for retail distribution.",
+  },
+  { id:"T14", wedge:"POL", upside:true,
+    name:"EU strategic autonomy breakthrough (upside)", short:"EU autonomy (up)",
+    base:  { score:1.5, th:24, thLabel:"24m",     scores:[2,3,3,2,2,1,2] },
+    worst: { score:1.3, th:24, thLabel:"24m",     scores:[1,3,2,1,1,1,1] },
+    baseNote: "Crisis acts as catalyst for EU fiscal and defence integration. Attenuates sovereign spread risk.",
+    worstNote: "Low probability, conditional on political will. Even if achieved, structural fragility remains.",
+  },
+  { id:"T15", wedge:"TEC", upside:false,
+    name:"AI market crash and algorithmic contagion", short:"AI market crash",
+    base:  { score:3.4, th:18, thLabel:"18m",     scores:[3,4,4,5,2,2,3] },
+    worst: { score:4.5, th:12, thLabel:"12m",     scores:[3,5,4,5,2,2,4] },
+    baseNote: "AI concentration risk building. Equity market exposure elevated. Own funds sensitive to tech sector correction.",
+    worstNote: "AI contagion in market already stressed by bear steepening creates cascading credit spread widening.",
+  },
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────────
+var scenario = 'base';
+var selectedId = null;
+
+// ── GEOMETRY ──────────────────────────────────────────────────────────────────
+var N = WEDGES.length;
+var WEDGE_ANGLE = (2 * Math.PI) / N;
+
+function thToRadius(th) {
+  var c = Math.min(Math.max(th, TH_MIN), TH_MAX);
+  return R_MIN + ((c - TH_MIN) / (TH_MAX - TH_MIN)) * (R_MAX - R_MIN);
+}
+
+function scoreToR(s) { return 5 + s * 6.8; }
+
+function wedgeColor(id) {
+  for (var i = 0; i < WEDGES.length; i++) if (WEDGES[i].id === id) return WEDGES[i].color;
+  return "#888";
+}
+
+function scoreColor(s) {
+  if (s >= 4) return "#ef4444";
+  if (s >= 3) return "#f59e0b";
+  return "#22c55e";
+}
+
+function computePositions() {
+  var byWedge = {};
+  THEMES.forEach(function(t) {
+    if (!byWedge[t.wedge]) byWedge[t.wedge] = [];
+    byWedge[t.wedge].push(t);
+  });
+  var pos = {};
+  Object.keys(byWedge).forEach(function(wid) {
+    var evs = byWedge[wid];
+    var wi = 0;
+    for (var i = 0; i < WEDGES.length; i++) if (WEDGES[i].id === wid) { wi = i; break; }
+    var midA = wi * WEDGE_ANGLE - Math.PI/2 + WEDGE_ANGLE/2;
+    var count = evs.length;
+    evs.forEach(function(t, idx) {
+      var spread = count > 1 ? 0.58 : 0;
+      var jitter = count > 1 ? (-spread/2 + (idx/(count-1))*spread)*WEDGE_ANGLE : 0;
+      var a = midA + jitter;
+      var d = t[scenario];
+      var r = thToRadius(d.th);
+      pos[t.id] = { x: CX + r*Math.cos(a), y: CY + r*Math.sin(a), r: scoreToR(d.score), score: d.score };
+    });
+  });
+  return pos;
+}
+
+// ── SVG HELPERS ────────────────────────────────────────────────────────────────
+var NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs) {
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function txt(content, attrs) {
+  var e = el("text", attrs);
+  e.textContent = content;
+  return e;
+}
+
+// ── DRAW RADAR ─────────────────────────────────────────────────────────────────
+function drawRadar() {
+  var svg = document.getElementById("radar-svg");
+  svg.innerHTML = "";
+
+  // defs
+  var defs = el("defs", {});
+  // glow filter
+  var fglow = el("filter", { id:"glow" });
+  var blur1 = el("feGaussianBlur", { stdDeviation:"3", result:"cb" });
+  var merge1 = el("feMerge", {});
+  merge1.appendChild(el("feMergeNode", { in:"cb" }));
+  merge1.appendChild(el("feMergeNode", { in:"SourceGraphic" }));
+  fglow.appendChild(blur1); fglow.appendChild(merge1);
+  defs.appendChild(fglow);
+  // halo filter
+  var fhalo = el("filter", { id:"halo" });
+  var blur2 = el("feGaussianBlur", { stdDeviation:"7", result:"cb" });
+  var merge2 = el("feMerge", {});
+  merge2.appendChild(el("feMergeNode", { in:"cb" }));
+  merge2.appendChild(el("feMergeNode", { in:"SourceGraphic" }));
+  fhalo.appendChild(blur2); fhalo.appendChild(merge2);
+  defs.appendChild(fhalo);
+  // radial gradients per wedge
+  WEDGES.forEach(function(w) {
+    var rg = el("radialGradient", { id:"rg-"+w.id, cx:"50%", cy:"50%", r:"50%" });
+    var s1 = el("stop", { offset:"0%",   "stop-color":w.color, "stop-opacity":"0.03" });
+    var s2 = el("stop", { offset:"100%", "stop-color":w.color, "stop-opacity":"0.14" });
+    rg.appendChild(s1); rg.appendChild(s2);
+    defs.appendChild(rg);
+  });
+  svg.appendChild(defs);
+
+  // wedge fills
+  WEDGES.forEach(function(w, i) {
+    var a1 = i*WEDGE_ANGLE - Math.PI/2;
+    var a2 = a1 + WEDGE_ANGLE;
+    var x1 = CX + R_MAX*Math.cos(a1), y1 = CY + R_MAX*Math.sin(a1);
+    var x2 = CX + R_MAX*Math.cos(a2), y2 = CY + R_MAX*Math.sin(a2);
+    var d = "M "+CX+" "+CY+" L "+x1+" "+y1+" A "+R_MAX+" "+R_MAX+" 0 0 1 "+x2+" "+y2+" Z";
+    svg.appendChild(el("path", { d:d, fill:"url(#rg-"+w.id+")", stroke:w.color, "stroke-width":"0.4", "stroke-opacity":"0.3" }));
+  });
+
+  // rings
+  var rings = [9, 12, 18, 24, 36];
+  rings.forEach(function(th) {
+    var r = thToRadius(th);
+    var isKey = th===12||th===24;
+    svg.appendChild(el("circle", { cx:CX, cy:CY, r:r, fill:"none", stroke:"#1e3a5f",
+      "stroke-width": isKey?"1":"0.5", "stroke-dasharray": isKey?"none":"3,4" }));
+    svg.appendChild(txt(th+"m", { x:CX+3, y:CY-r+12, "font-size":"8.5", fill:"#2d5080",
+      "font-family":"monospace", "font-weight":isKey?"600":"400" }));
+  });
+
+  // center circle
+  svg.appendChild(el("circle", { cx:CX, cy:CY, r:R_MIN, fill:"#070e1c", stroke:"#1e3a5f", "stroke-width":"1" }));
+
+  // spokes
+  WEDGES.forEach(function(w, i) {
+    var a = i*WEDGE_ANGLE - Math.PI/2;
+    svg.appendChild(el("line", {
+      x1: CX+R_MIN*Math.cos(a), y1: CY+R_MIN*Math.sin(a),
+      x2: CX+R_MAX*Math.cos(a), y2: CY+R_MAX*Math.sin(a),
+      stroke: w.color, "stroke-width":"0.7", "stroke-opacity":"0.35"
+    }));
+  });
+
+  // wedge labels
+  WEDGES.forEach(function(w, i) {
+    var midA = i*WEDGE_ANGLE - Math.PI/2 + WEDGE_ANGLE/2;
+    var d = R_MAX + 28;
+    svg.appendChild(txt(w.label, {
+      x: CX+d*Math.cos(midA), y: CY+d*Math.sin(midA),
+      "text-anchor":"middle", "dominant-baseline":"middle",
+      "font-size":"11", "font-weight":"700", fill:w.color, "font-family":"sans-serif"
+    }));
+  });
+
+  // center text
+  svg.appendChild(txt("IMPACT", { x:CX, y:CY-7, "text-anchor":"middle", "font-size":"8",
+    fill:"#1e3050", "font-family":"monospace", "font-weight":"600", "letter-spacing":"1" }));
+  svg.appendChild(txt("RADAR",  { x:CX, y:CY+7, "text-anchor":"middle", "font-size":"7",
+    fill:"#1e3050", "font-family":"monospace", "letter-spacing":"1" }));
+
+  // bubbles
+  var pos = computePositions();
+  THEMES.forEach(function(t) {
+    var p = pos[t.id];
+    if (!p) return;
+    var x = p.x, y = p.y, br = p.r;
+    var isSel = selectedId === t.id;
+    var isUp = t.upside;
+    var wCol = wedgeColor(t.wedge);
+
+    var g = el("g", { style:"cursor:pointer" });
+
+    if (isSel) {
+      g.appendChild(el("circle", { cx:x, cy:y, r:br+10,
+        fill:wCol+"14", stroke:wCol, "stroke-width":"1.5", filter:"url(#halo)" }));
+    }
+    g.appendChild(el("circle", { cx:x, cy:y, r:br,
+      fill: isUp ? wCol+"18" : wCol+"bb",
+      stroke: (isUp||isSel) ? wCol : "none",
+      "stroke-width": isUp?"1.5": isSel?"2":"0",
+      "stroke-dasharray": isUp?"3,2":"none",
+      filter: isSel?"url(#glow)":"none",
+      opacity: isSel?"1": isUp?"0.7":"0.9"
+    }));
+
+    // score inside bubble
+    g.appendChild(txt(p.score.toFixed(1), { x:x, y:y+1,
+      "text-anchor":"middle", "dominant-baseline":"middle",
+      "font-size":"8", "font-weight":"700", fill:"#fff", "font-family":"monospace"
+    }));
+
+    // label above bubble — always visible
+    g.appendChild(txt(t.short, { x:x, y:y-br-5,
+      "text-anchor":"middle",
+      "font-size":"7",
+      fill: isSel ? wCol : "#7a8fa8",
+      "font-weight": isSel ? "700" : "500",
+      "font-family":"sans-serif"
+    }));
+
+    g.addEventListener("mouseenter", function(e) { showTip(e, t, p); });
+    g.addEventListener("mouseleave", hideTip);
+    g.addEventListener("click", function() { selectTheme(t.id === selectedId ? null : t.id); });
+    svg.appendChild(g);
+  });
+}
+
+// ── TOOLTIP ────────────────────────────────────────────────────────────────────
+function showTip(e, t, p) {
+  var d = t[scenario];
+  var tip = document.getElementById("tooltip");
+  tip.innerHTML = "<b>"+t.short+"</b><br><span style='color:#94a3b8;font-size:10px'>Score: "+d.score.toFixed(1)+"/5 · TH: "+d.thLabel+"</span>";
+  tip.style.display = "block";
+  moveTip(e);
+}
+function hideTip() { document.getElementById("tooltip").style.display = "none"; }
+document.addEventListener("mousemove", moveTip);
+function moveTip(e) {
+  var tip = document.getElementById("tooltip");
+  if (tip.style.display === "none") return;
+  tip.style.left = (e.clientX+14)+"px";
+  tip.style.top  = (e.clientY-8)+"px";
+}
+
+// ── SPIDER CHART ───────────────────────────────────────────────────────────────
+function buildSpider(t) {
+  var sz=210, cx=105, cy=105, r=75, n=INDICATORS.length, max=5;
+  var ang = function(i) { return (Math.PI*2*i)/n - Math.PI/2; };
+  var pt  = function(v, i) {
+    var a=ang(i), d=(v/max)*r;
+    return [cx+d*Math.cos(a), cy+d*Math.sin(a)];
+  };
+  var ptStr = function(scores) {
+    return scores.map(function(v,i){ var p=pt(v,i); return p[0]+","+p[1]; }).join(" ");
+  };
+  var wCol = wedgeColor(t.wedge);
+  var db = t.base, dw = t.worst;
+
+  var svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("width", sz); svg.setAttribute("height", sz);
+  svg.setAttribute("viewBox", "0 0 "+sz+" "+sz);
+
+  // grid
+  [1,2,3,4,5].forEach(function(lv) {
+    var pts = [];
+    for (var i=0;i<n;i++) { var p=pt(lv,i); pts.push(p[0]+","+p[1]); }
+    var poly = document.createElementNS(NS,"polygon");
+    poly.setAttribute("points", pts.join(" "));
+    poly.setAttribute("fill","none");
+    poly.setAttribute("stroke", lv===5?"#334155":"#1a2a3a");
+    poly.setAttribute("stroke-width", lv===5?"1":"0.5");
+    svg.appendChild(poly);
+  });
+  for (var i=0;i<n;i++) {
+    var p=pt(5,i);
+    var ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",cx); ln.setAttribute("y1",cy);
+    ln.setAttribute("x2",p[0]); ln.setAttribute("y2",p[1]);
+    ln.setAttribute("stroke","#1a2a3a"); ln.setAttribute("stroke-width","0.5");
+    svg.appendChild(ln);
+  }
+
+  // base polygon (dashed)
+  var polyB = document.createElementNS(NS,"polygon");
+  polyB.setAttribute("points", ptStr(db.scores));
+  polyB.setAttribute("fill", wCol+"22");
+  polyB.setAttribute("stroke", wCol);
+  polyB.setAttribute("stroke-width","1.5");
+  polyB.setAttribute("stroke-dasharray","4,2");
+  svg.appendChild(polyB);
+
+  // worst polygon (solid)
+  var polyW = document.createElementNS(NS,"polygon");
+  polyW.setAttribute("points", ptStr(dw.scores));
+  polyW.setAttribute("fill", wCol+"44");
+  polyW.setAttribute("stroke", wCol);
+  polyW.setAttribute("stroke-width","2");
+  svg.appendChild(polyW);
+
+  // dots
+  db.scores.forEach(function(v,i) {
+    var p=pt(v,i);
+    var c=document.createElementNS(NS,"circle");
+    c.setAttribute("cx",p[0]); c.setAttribute("cy",p[1]);
+    c.setAttribute("r","2.5"); c.setAttribute("fill",wCol); c.setAttribute("opacity","0.55");
+    svg.appendChild(c);
+  });
+  dw.scores.forEach(function(v,i) {
+    var p=pt(v,i);
+    var c=document.createElementNS(NS,"circle");
+    c.setAttribute("cx",p[0]); c.setAttribute("cy",p[1]);
+    c.setAttribute("r","3"); c.setAttribute("fill",wCol);
+    svg.appendChild(c);
+  });
+
+  // labels
+  INDICATORS.forEach(function(lbl,i) {
+    var a=ang(i), d=r+20;
+    var t2=document.createElementNS(NS,"text");
+    t2.setAttribute("x", cx+d*Math.cos(a));
+    t2.setAttribute("y", cy+d*Math.sin(a));
+    t2.setAttribute("text-anchor","middle");
+    t2.setAttribute("dominant-baseline","middle");
+    t2.setAttribute("font-size","7.5");
+    t2.setAttribute("fill","#64748b");
+    t2.setAttribute("font-family","sans-serif");
+    t2.textContent = lbl;
+    svg.appendChild(t2);
+  });
+  return svg;
+}
+
+// ── PANEL ──────────────────────────────────────────────────────────────────────
+function renderPanel() {
+  var panel = document.getElementById("panel");
+  var main  = document.getElementById("main");
+
+  if (!selectedId) {
+    panel.classList.remove("visible");
+    main.classList.remove("with-panel");
+    return;
+  }
+  var t = null;
+  for (var i=0;i<THEMES.length;i++) if (THEMES[i].id===selectedId) { t=THEMES[i]; break; }
+  if (!t) return;
+
+  panel.classList.add("visible");
+  main.classList.add("with-panel");
+
+  var wCol  = wedgeColor(t.wedge);
+  var wLbl  = WEDGES.filter(function(w){return w.id===t.wedge;})[0].label;
+  var db    = t.base;
+  var dw    = t.worst;
+  var delta = (dw.score - db.score);
+  var deltaStr = delta>0 ? "+"+delta.toFixed(1)+" in worst case" : delta<0 ? delta.toFixed(1)+" (upside attenuates)" : "Score unchanged — TH compresses";
+  var deltaCol  = delta>0 ? "#ef4444" : delta<0 ? "#22c55e" : "#f59e0b";
+  var deltaBg   = delta>0 ? "#ef444412" : delta<0 ? "#22c55e12" : "#f59e0b12";
+  var deltaBord = delta>0 ? "#ef444440" : delta<0 ? "#22c55e40" : "#f59e0b40";
+
+  var html = '<div class="panel-top-row">'
+    + '<div><div class="panel-cat" style="color:'+wCol+'">'+wLbl+' trigger</div>'
+    + '<div class="panel-title">'+t.name+'</div></div>'
+    + '<button class="panel-close" onclick="selectTheme(null)">&#x2715;</button></div>';
+
+  html += '<div class="score-grid">';
+  [["Base Case", db, false], ["Worst Case", dw, true]].forEach(function(row) {
+    var lbl=row[0], d=row[1], hl=row[2];
+    html += '<div class="score-card" style="background:'+(hl?wCol+"12":"#0f1c2e")+';border:1px solid '+(hl?wCol+"44":"#1e3a5f")+'">'
+      + '<div class="sc-lbl">'+lbl+'</div>'
+      + '<div class="sc-val" style="color:'+scoreColor(d.score)+'">'+d.score.toFixed(1)+'</div>'
+      + '<div class="sc-th">TH: '+d.thLabel+'</div></div>';
+  });
+  html += '</div>';
+
+  html += '<div class="delta-badge" style="background:'+deltaBg+';border:1px solid '+deltaBord+';color:'+deltaCol+'">'+deltaStr+'</div>';
+
+  html += '<div class="note-box"><b>Base case: </b>'+t.baseNote+'</div>';
+  html += '<div class="note-box" style="border-color:#ef444422"><b>Worst case: </b>'+t.worstNote+'</div>';
+
+  html += '<div class="spider-label">Impact profile — dashed = base, solid = worst</div>';
+  html += '<div id="spider-wrap" style="display:flex;justify-content:center"></div>';
+
+  html += '<div class="indicator-table">';
+  html += '<div class="ind-header"><span>Indicator</span><span style="text-align:center">Base</span><span style="text-align:center">Worst</span><span style="text-align:center">d</span></div>';
+  INDICATORS.forEach(function(ind, idx) {
+    var sb=db.scores[idx], sw=dw.scores[idx], d=sw-sb;
+    var dc = d>0?"#ef4444":d<0?"#22c55e":"#334155";
+    html += '<div class="ind-row">'
+      + '<span class="ind-name">'+ind+'</span>'
+      + '<span class="ind-val" style="color:'+scoreColor(sb)+'">'+sb+'</span>'
+      + '<span class="ind-val" style="color:'+scoreColor(sw)+'">'+sw+'</span>'
+      + '<span class="ind-delta" style="color:'+dc+'">'+(d>0?"+"+d:d===0?"=":d)+'</span>'
+      + '</div>';
+  });
+  html += '</div>';
+
+  panel.innerHTML = html;
+
+  // append spider SVG
+  var wrap = document.getElementById("spider-wrap");
+  if (wrap) wrap.appendChild(buildSpider(t));
+}
+
+// ── SELECT ──────────────────────────────────────────────────────────────────────
+function selectTheme(id) {
+  selectedId = id;
+  renderPanel();
+  drawRadar();
+}
+
+// ── SCENARIO ───────────────────────────────────────────────────────────────────
+function setScenario(s) {
+  scenario = s;
+  var bb = document.getElementById("btn-base");
+  var bw = document.getElementById("btn-worst");
+  bb.className = "toggle-btn" + (s==="base" ? " active" : "");
+  bw.className = "toggle-btn" + (s==="worst" ? " active-worst" : "");
+  var badge = document.getElementById("scenario-badge");
+  if (s === "worst") {
+    badge.style.display = "block";
+    badge.style.color = "#ef4444";
+    badge.style.border = "1px solid #ef444433";
+    badge.style.background = "#ef44440a";
+    badge.textContent = "Worst case active";
+  } else {
+    badge.style.display = "none";
+  }
+  renderPanel();
+  drawRadar();
+}
+
+// ── LEGEND ──────────────────────────────────────────────────────────────────────
+function renderLegend() {
+  var leg = document.getElementById("wedge-legend");
+  leg.innerHTML = WEDGES.map(function(w) {
+    return '<div class="leg-item"><span class="leg-dot" style="background:'+w.color+'"></span>'+w.label+'</div>';
+  }).join('');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+renderLegend();
+drawRadar();
+</script>
+
+</body>
+</html>
