@@ -57,15 +57,18 @@ transition:all .2s;
 }
 .ctrl-btn:hover { border-color:#4a9eff; color:#93c5fd; }
 
-.zoom-group { display:flex; gap:3px; }
-.zoom-btn {
-width:26px; height:26px; border-radius:5px;
-border:1px solid #1e3a5f; background:#0d1e33;
-color:#4a6080; font-size:15px; font-weight:700;
-display:flex; align-items:center; justify-content:center;
-transition:all .2s;
+/* ── TH FILTER ── */
+.th-filter-group {
+background:#0d1e33; border-radius:7px; padding:3px;
+display:flex; border:1px solid #1e3a5f; gap:2px;
 }
-.zoom-btn:hover { border-color:#4a9eff; color:#93c5fd; }
+.th-filter-btn {
+padding:5px 11px; border-radius:5px; border:none;
+font-size:10px; font-weight:600; background:transparent;
+color:#4a6080; transition:all .2s; white-space:nowrap;
+cursor:pointer;
+}
+.th-filter-btn.active { background:#1a3a5a; color:#4a9eff; }
 #file-input { display:none; }
 
 /* ── MAIN ── */
@@ -79,13 +82,13 @@ border:1px solid #1a3050;
 border-radius:12px;
 padding:10px 4px 8px;
 position:relative;
-overflow:visible;
 }
 #scenario-badge {
 position:absolute; top:10px; left:12px;
 font-size:9px; border-radius:4px; padding:2px 7px; display:none;
+z-index:5;
 }
-#radar-svg { display:block; width:100%; transition:transform 0.2s ease; transform-origin:center center; }
+#radar-svg { display:block; width:100%; }
 
 /* ── RING LEGEND ── */
 #ring-legend {
@@ -244,10 +247,14 @@ pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.
       <button class="toggle-btn active-base" id="btn-base" onclick="setScenario('base')">Base Case</button>
       <button class="toggle-btn" id="btn-worst" onclick="setScenario('worst')">Worst Case</button>
     </div>
-    <div class="zoom-group">
-      <button class="zoom-btn" onclick="adjustZoom(0.15)">+</button>
-      <button class="zoom-btn" onclick="adjustZoom(-0.15)">−</button>
-      <button class="ctrl-btn" onclick="resetZoom()">Reset</button>
+    <div class="th-filter-group">
+      <button class="th-filter-btn active" id="thf-all" onclick="setThFilter('all')">All</button>
+      <button class="th-filter-btn" id="thf-6"  onclick="setThFilter(6)">0–6m</button>
+      <button class="th-filter-btn" id="thf-12" onclick="setThFilter(12)">0–12m</button>
+      <button class="th-filter-btn" id="thf-18" onclick="setThFilter(18)">0–18m</button>
+      <button class="th-filter-btn" id="thf-24" onclick="setThFilter(24)">0–24m</button>
+      <button class="th-filter-btn" id="thf-30" onclick="setThFilter(30)">0–30m</button>
+      <button class="th-filter-btn" id="thf-36" onclick="setThFilter(36)">0–36m</button>
     </div>
     <button class="ctrl-btn" id="btn-scenario" onclick="openScenarioModal()" style="border-color:#4a9eff;color:#4a9eff">⊕ Scenario &amp; SEI</button>
     <button class="ctrl-btn" onclick="document.getElementById('file-input').click()">↑ Upload Excel</button>
@@ -267,10 +274,11 @@ pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.
     <!-- viewBox wider than radar to give room for outer labels -->
     <svg id="radar-svg" viewBox="-90 -90 860 860" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="ring-legend">
-      <span><b>9m</b> Near-term</span>
+      <span><b>6m</b> Near-term</span>
       <span><b>12m</b> Short</span>
       <span><b>18m</b> Medium</span>
       <span><b>24m</b> Long</span>
+      <span><b>30m</b> Extended</span>
       <span><b>36m+</b> Distant</span>
     </div>
   </div>
@@ -462,9 +470,24 @@ function scoreToBR(s){return BR_MIN+((Math.min(5,Math.max(1,s))-1)/4)*(BR_MAX-BR
 
 // ── GEOMETRY ──────────────────────────────────────────────────────────────────
 var N=WEDGES.length, WA=(2*Math.PI)/N;
+
+// effective max TH based on current filter
+function effectiveMaxTH(){
+  return thFilter==='all' ? 36 : parseInt(thFilter);
+}
+
 function thToR(th){
-  var c=Math.min(Math.max(th,TH_MIN),TH_MAX);
-  return R_MIN+((c-TH_MIN)/(TH_MAX-TH_MIN))*(R_MAX-R_MIN);
+  var maxTH = effectiveMaxTH();
+  var c=Math.min(Math.max(th,TH_MIN), maxTH);
+  return R_MIN+((c-TH_MIN)/(maxTH-TH_MIN))*(R_MAX-R_MIN);
+}
+
+function activeThemes(){
+  return THEMES.filter(function(t){
+    if(t.upside) return false;
+    if(thFilter==='all') return true;
+    return t[scenario].th <= parseInt(thFilter);
+  });
 }
 function wedgeColor(id){for(var i=0;i<WEDGES.length;i++)if(WEDGES[i].id===id)return WEDGES[i].color;return "#888";}
 
@@ -538,13 +561,13 @@ var DEFAULT_THEMES=[
 ];
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
-var scenario='base', selectedId=null, zoomLevel=1.0;
+var scenario='base', selectedId=null, thFilter='all';
 var THEMES=DEFAULT_THEMES.slice();
 
 // ── POSITIONS ──────────────────────────────────────────────────────────────────
 function computePositions(){
   var byWedge={};
-  THEMES.filter(function(t){return !t.upside;}).forEach(function(t){
+  activeThemes().forEach(function(t){
     if(!byWedge[t.wedge])byWedge[t.wedge]=[];
     byWedge[t.wedge].push(t);
   });
@@ -568,7 +591,7 @@ function computePositions(){
 
 // ── WEDGE AVERAGE ──────────────────────────────────────────────────────────────
 function wedgeAvg(wid){
-  var ts=THEMES.filter(function(t){return t.wedge===wid&&!t.upside;});
+  var ts=activeThemes().filter(function(t){return t.wedge===wid;});
   if(!ts.length)return null;
   return (ts.reduce(function(a,t){return a+t[scenario].score;},0)/ts.length).toFixed(1);
 }
@@ -619,20 +642,27 @@ function drawRadar(){
     svg.appendChild(el("path",{d:d,fill:"url(#rg-"+w.id+")",stroke:w.color,"stroke-width":"0.5","stroke-opacity":"0.5"}));
   });
 
-  // ── TH rings — alternating bands + solid/dashed ──
-  var ringDefs=[
-    {th:9,  dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
+  // ── TH rings — only show rings up to active filter ──
+  var allRings=[
+    {th:6,  dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
     {th:12, dash:"none", sw:"1.2", col:"#2a5080"},
     {th:18, dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
     {th:24, dash:"none", sw:"1.2", col:"#2a5080"},
+    {th:30, dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
     {th:36, dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
   ];
-  // alternating faint annular fills
+  var maxTH=effectiveMaxTH();
+  var ringDefs=allRings.filter(function(r){return r.th<=maxTH;});
+  // outermost ring is always the filter boundary — draw it solid and bright
+  if(ringDefs.length>0){
+    ringDefs[ringDefs.length-1].dash="none";
+    ringDefs[ringDefs.length-1].sw="1.5";
+    ringDefs[ringDefs.length-1].col="#3a70b0";
+  }
   for(var ri=0;ri<ringDefs.length;ri++){
     if(ri%2===0){
       var rOuter=thToR(ringDefs[ri].th);
       var rInner=ri===0?R_MIN:thToR(ringDefs[ri-1].th);
-      // annular path using even-odd
       var pd="M "+(CX+rOuter)+" "+CY
         +" A "+rOuter+" "+rOuter+" 0 1 0 "+(CX-rOuter)+" "+CY
         +" A "+rOuter+" "+rOuter+" 0 1 0 "+(CX+rOuter)+" "+CY
@@ -645,7 +675,6 @@ function drawRadar(){
     var rv=thToR(rd.th);
     svg.appendChild(el("circle",{cx:CX,cy:CY,r:rv,fill:"none",
       stroke:rd.col,"stroke-width":rd.sw,"stroke-dasharray":rd.dash}));
-    // TH label — upper left of each ring
     svg.appendChild(txt(rd.th+"m",{x:CX+5,y:CY-rv+13,
       "font-size":"9","font-family":"monospace",fill:"#3a6898",
       "font-weight":rd.dash==="none"?"700":"400"}));
@@ -692,9 +721,9 @@ function drawRadar(){
 
   // ── bubbles (first pass — circles only) ──
   var pos=computePositions();
-  var activeThemes=THEMES.filter(function(t){return !t.upside;});
+  var visibleThemes=activeThemes();
 
-  activeThemes.forEach(function(t){
+  visibleThemes.forEach(function(t){
     var p=pos[t.id];if(!p)return;
     var br=scoreToBR(p.score);
     var isSel=selectedId===t.id;
@@ -726,7 +755,7 @@ function drawRadar(){
   var LH=9, LW=58;
 
   // initial position: push label outward from center past the bubble edge
-  var labelData=activeThemes.map(function(t){
+  var labelData=visibleThemes.map(function(t){
     var p=pos[t.id];if(!p)return null;
     var br=scoreToBR(p.score);
     var dx=p.x-CX, dy=p.y-CY;
@@ -756,7 +785,7 @@ function drawRadar(){
         }
       }
       // repel from bubble centers (all bubbles, not just own)
-      activeThemes.forEach(function(t2){
+      visibleThemes.forEach(function(t2){
         var p2=pos[t2.id];if(!p2)return;
         var br2=scoreToBR(p2.score);
         var dx2=labelData[a].lx-p2.x, dy2=labelData[a].ly-p2.y;
@@ -911,11 +940,21 @@ function setScenario(s){
   else badge.style.display="none";
   renderPanel();drawRadar();
 }
-function adjustZoom(d){
-  zoomLevel=Math.min(3,Math.max(0.5,zoomLevel+d));
-  document.getElementById("radar-svg").style.transform="scale("+zoomLevel+")";
+// ── TH FILTER ──────────────────────────────────────────────────────────────────
+function setThFilter(val){
+  thFilter=val;
+  ['all',6,12,18,24,30,36].forEach(function(v){
+    var btn=document.getElementById('thf-'+(v==='all'?'all':v));
+    if(btn) btn.className='th-filter-btn'+(v===val?' active':'');
+  });
+  if(selectedId){
+    var t=THEMES.filter(function(t){return t.id===selectedId;})[0];
+    if(t && thFilter!=='all' && t[scenario].th>parseInt(thFilter)){
+      selectedId=null; renderPanel();
+    }
+  }
+  drawRadar();
 }
-function resetZoom(){zoomLevel=1;document.getElementById("radar-svg").style.transform="scale(1)";}
 
 // ── EXCEL UPLOAD ───────────────────────────────────────────────────────────────
 var REQUIRED_COLS=["trigger","theme_name","score_base","score_worst","th_base_months","th_worst_months"];
