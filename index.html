@@ -152,7 +152,77 @@ font-size:11px; color:#fca5a5;
 #error-panel .err-item  { margin-bottom:3px; padding-left:10px; }
 #error-panel .err-close { float:right; background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; }
 
-/* ── TOOLTIP ── */
+/* ── SCENARIO MODAL ── */
+#scenario-modal-overlay {
+display:none; position:fixed; inset:0;
+background:rgba(0,0,0,0.75); z-index:10000;
+align-items:flex-start; justify-content:center;
+padding:30px 20px; overflow-y:auto;
+}
+#scenario-modal-overlay.open { display:flex; }
+#scenario-modal {
+background:#0b1525; border:1px solid #1a3050; border-radius:14px;
+width:100%; max-width:860px; padding:0; overflow:hidden;
+box-shadow:0 24px 80px rgba(0,0,0,0.6);
+}
+.sm-header {
+padding:18px 24px 14px;
+border-bottom:1px solid #1a3050;
+display:flex; justify-content:space-between; align-items:center;
+}
+.sm-header h2 { font-size:15px; font-weight:700; color:#fff; margin:0; }
+.sm-header .sm-date { font-size:9px; color:#3a5570; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+.sm-close { background:none; border:none; color:#3a5570; font-size:20px; cursor:pointer; padding:0; line-height:1; }
+.sm-close:hover { color:#fff; }
+.sm-body { padding:20px 24px; display:flex; flex-direction:column; gap:18px; }
+
+/* scenario narrative cards */
+.sc-narrative {
+border-radius:9px; padding:16px 18px;
+border-left:4px solid transparent;
+}
+.sc-narrative.base-card {
+background:#0d1e33; border-left-color:#4a9eff;
+}
+.sc-narrative.worst-card {
+background:#1a0a0a; border-left-color:#ff4040;
+}
+.sc-narrative .sc-badge {
+font-size:8px; font-weight:700; letter-spacing:2.5px;
+text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:8px;
+}
+.sc-narrative.base-card  .sc-badge { color:#4a9eff; }
+.sc-narrative.worst-card .sc-badge { color:#ff4040; }
+.sc-narrative .sc-text { font-size:11px; color:#8aa8c8; line-height:1.7; }
+.sc-narrative.worst-card .sc-text { color:#c89898; }
+
+/* SEI table */
+.sei-section h3 {
+font-size:9px; font-weight:700; letter-spacing:2px;
+text-transform:uppercase; color:#ffc040; margin-bottom:10px;
+}
+.sei-table { width:100%; border-collapse:collapse; font-size:10px; }
+.sei-table th {
+text-align:left; padding:6px 10px;
+font-size:8px; font-weight:700; letter-spacing:1px;
+text-transform:uppercase; color:#2a4a6a;
+border-bottom:1px solid #1a3050;
+}
+.sei-table td {
+padding:8px 10px; border-bottom:1px solid #0f1e2e;
+vertical-align:top; color:#6a8aa8; font-size:10px;
+}
+.sei-table td:first-child { color:#aac4d8; font-weight:500; }
+.sei-table tr:last-child td { border-bottom:none; }
+.sei-status {
+display:inline-block; padding:2px 8px; border-radius:10px;
+font-size:8.5px; font-weight:700; letter-spacing:0.5px;
+}
+.sei-green  { background:#0a2a12; color:#40d890; border:1px solid #40d89040; }
+.sei-amber  { background:#2a1a00; color:#ffc040; border:1px solid #ffc04040; }
+.sei-red    { background:#2a0808; color:#ff4040; border:1px solid #ff404040; }
+.sei-note { font-size:8.5px; color:#3a5570; margin-top:18px; font-style:italic; }
+
 #tooltip {
 position:fixed; background:#0d1e33; border:1px solid #1e3a5f;
 border-radius:5px; padding:5px 9px; font-size:11px; color:#dde6f0;
@@ -179,6 +249,7 @@ pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.
       <button class="zoom-btn" onclick="adjustZoom(-0.15)">−</button>
       <button class="ctrl-btn" onclick="resetZoom()">Reset</button>
     </div>
+    <button class="ctrl-btn" id="btn-scenario" onclick="openScenarioModal()" style="border-color:#4a9eff;color:#4a9eff">⊕ Scenario &amp; SEI</button>
     <button class="ctrl-btn" onclick="document.getElementById('file-input').click()">↑ Upload Excel</button>
     <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
   </div>
@@ -209,6 +280,142 @@ pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.
 <div id="bottom-legend">
   <span class="leg-label">Impact:</span>
   <div id="wedge-legend" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"></div>
+</div>
+
+<!-- ── SCENARIO & SEI MODAL ── -->
+
+<div id="scenario-modal-overlay" onclick="if(event.target===this)closeScenarioModal()">
+  <div id="scenario-modal">
+    <div class="sm-header">
+      <div>
+        <h2>Scenario Narrative &amp; Scenario Evolution Indicators</h2>
+        <div class="sm-date">Assessment date: March 2026 &nbsp;·&nbsp; Next review: upon SEI trigger or Q2 Working Group meeting</div>
+      </div>
+      <button class="sm-close" onclick="closeScenarioModal()">✕</button>
+    </div>
+    <div class="sm-body">
+
+```
+  <!-- BASE NARRATIVE -->
+  <div class="sc-narrative base-card">
+    <div class="sc-badge">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4a9eff"></span>
+      Base Case Scenario
+    </div>
+    <div class="sc-text">
+      The Middle East conflict remains active but contained. Iranian proxies are engaged across multiple theatres; no direct US military confrontation has materialised. Energy routes through the Strait of Hormuz remain operational, with shipping costs elevated but manageable. The conflict contributes to moderate inflationary pressure on energy-sensitive insurance lines but has not triggered systemic disruption.
+      <br><br>
+      In Eastern Europe, the Russia-Ukraine conflict is in a prolonged stalemate. Active negotiation channels exist but no ceasefire is in place. Neither side has the capacity for a decisive offensive. Sovereign credit stress in CEE countries is elevated but contained; European energy dependency has reduced but structural vulnerability remains.
+      <br><br>
+      US foreign policy is marked by selective engagement and mounting fiscal constraints. The new Fed leadership raises questions on monetary policy independence, with bear steepening risk present but not materialised. Tariffs on EU goods stand at approximately 25%, with an uncoordinated EU response. Geopolitical fragmentation is advancing gradually across financial, technology, and trade dimensions — not in a disruptive discontinuity, but through accumulating structural shifts.
+    </div>
+  </div>
+
+  <!-- WORST NARRATIVE -->
+  <div class="sc-narrative worst-card">
+    <div class="sc-badge">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4040"></span>
+      Worst Case Scenario
+    </div>
+    <div class="sc-text">
+      The Middle East conflict escalates into direct and sustained US military engagement. The scale of this engagement absorbs a significant share of US strategic resources, materially reducing its effective presence and credibility in other theatres. Energy supply through the Strait of Hormuz is severely disrupted for an extended period, triggering a commodity shock that amplifies inflationary pressure across all insurance lines and constrains Fed flexibility.
+      <br><br>
+      The reduction in US strategic bandwidth is read by Russia as a window of opportunity in Eastern Europe. The conflict expands in scale or geography, triggering wider European sovereign stress, accelerated defence spending, and deterioration in CEE credit markets. European governance fragmentation — already present in the base — deepens materially, preventing a coordinated fiscal or trade response.
+      <br><br>
+      In this context, China reassesses the credibility of US deterrence in the Indo-Pacific. The probability of a move on Taiwan — while still not the most likely outcome — shifts meaningfully leftward on the distribution. Simultaneously, the combination of energy shock, monetary policy uncertainty, and geopolitical fragmentation destabilises financial markets: bear steepening accelerates, credit spreads widen sharply, and own funds across the European insurance sector come under acute pressure.
+    </div>
+  </div>
+
+  <!-- SEI TABLE -->
+  <div class="sei-section">
+    <h3>Scenario Evolution Indicators (SEI)</h3>
+    <table class="sei-table">
+      <thead>
+        <tr>
+          <th style="width:22%">Indicator</th>
+          <th style="width:28%">Description</th>
+          <th style="width:16%">Threshold</th>
+          <th style="width:16%">Current value</th>
+          <th style="width:10%">Status</th>
+          <th style="width:8%">Direction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Brent crude price</td>
+          <td>Sustained energy price spike signals Hormuz stress or supply shock materialising</td>
+          <td>&gt; $100/bbl for &gt;10 trading days</td>
+          <td>$82/bbl</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>BTP–Bund spread</td>
+          <td>Italian sovereign spread as proxy for EU governance stress and fiscal fragmentation</td>
+          <td>&gt; 280 bp</td>
+          <td>168 bp</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>US 10Y–2Y yield spread</td>
+          <td>Bear steepening indicator; inversion reversal driven by long-end sell-off signals Fed credibility stress</td>
+          <td>&gt; +80 bp and rising</td>
+          <td>+42 bp</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>EUR/USD 30-day vol</td>
+          <td>FX volatility spike signals loss of confidence in USD or abrupt capital flow reversal</td>
+          <td>&gt; 12%</td>
+          <td>7.4%</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>US-EU effective tariff rate</td>
+          <td>Escalation beyond current level signals trade war deepening; threshold marks shift from actuarial to solvency problem</td>
+          <td>&gt; 35% on EU industrial goods</td>
+          <td>~25%</td>
+          <td><span class="sei-status sei-amber">Watch</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>Suez / Red Sea transit volume</td>
+          <td>Shipping route disruption indicator; sustained reduction signals energy/trade supply chain stress</td>
+          <td>&lt; 60% of pre-conflict weekly baseline for &gt;3 weeks</td>
+          <td>~71% of baseline</td>
+          <td><span class="sei-status sei-amber">Watch</span></td>
+          <td>↓ Worst</td>
+        </tr>
+        <tr>
+          <td>iTraxx Europe Senior Financial</td>
+          <td>Credit spread on European financial institutions; widening signals systemic stress in insurance/banking balance sheets</td>
+          <td>&gt; 130 bp</td>
+          <td>78 bp</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>Formal NATO Article 5 consultation</td>
+          <td>Binary event — any formal invocation or consultation signals Eastern Europe escalation crossing into collective defence territory</td>
+          <td>Any formal invocation or consultation initiated</td>
+          <td>Not triggered</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>Triggered = Worst</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="sei-note">
+      SEI are monitored at scenario level. A threshold breach does not automatically update the assessment — it triggers a Working Group review to determine whether the scenario and the theme scores/time horizons need revision. Status reflects assessment as of March 2026.
+    </div>
+  </div>
+
+</div>
+```
+
+  </div>
 </div>
 
 <div id="tooltip"></div>
@@ -772,6 +979,14 @@ function renderLegend(){
       +'<span style="color:#4a6080;font-size:9px">'+SCORE_COLORS[s].label+'</span>'
       +'</div>';
   }).join('<div class="leg-sep"></div>');
+}
+
+// ── SCENARIO MODAL ─────────────────────────────────────────────────────────────
+function openScenarioModal(){
+  document.getElementById("scenario-modal-overlay").classList.add("open");
+}
+function closeScenarioModal(){
+  document.getElementById("scenario-modal-overlay").classList.remove("open");
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────────
