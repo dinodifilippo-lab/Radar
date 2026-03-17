@@ -82,11 +82,17 @@ border:1px solid #1a3050;
 border-radius:12px;
 padding:10px 4px 8px;
 position:relative;
+overflow:hidden;
 }
 #scenario-badge {
 position:absolute; top:10px; left:12px;
 font-size:9px; border-radius:4px; padding:2px 7px; display:none;
 z-index:5;
+}
+#radar-scale-wrap {
+width:100%;
+transform-origin: center top;
+transition: transform 0.15s ease;
 }
 #radar-svg { display:block; width:100%; }
 
@@ -271,15 +277,16 @@ pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.
 <div id="main">
   <div id="radar-box">
     <div id="scenario-badge"></div>
-    <!-- viewBox wider than radar to give room for outer labels -->
-    <svg id="radar-svg" viewBox="-90 -90 860 860" xmlns="http://www.w3.org/2000/svg"></svg>
-    <div id="ring-legend">
-      <span><b>6m</b> Near-term</span>
-      <span><b>12m</b> Short</span>
-      <span><b>18m</b> Medium</span>
-      <span><b>24m</b> Long</span>
-      <span><b>30m</b> Extended</span>
-      <span><b>36m+</b> Distant</span>
+    <div id="radar-scale-wrap">
+      <svg id="radar-svg" viewBox="-90 -90 860 860" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="ring-legend">
+        <span><b>6m</b> Near-term</span>
+        <span><b>12m</b> Short</span>
+        <span><b>18m</b> Medium</span>
+        <span><b>24m</b> Long</span>
+        <span><b>30m</b> Extended</span>
+        <span><b>36m+</b> Distant</span>
+      </div>
     </div>
   </div>
   <div id="panel"></div>
@@ -1065,6 +1072,55 @@ function renderLegend(){
       +'</div>';
   }).join('<div class="leg-sep"></div>');
 }
+
+// ── RADAR PINCH / CTRL+SCROLL ZOOM ────────────────────────────────────────────
+var radarScale = 1.0;
+var SCALE_MIN = 0.4, SCALE_MAX = 3.0;
+
+function applyRadarScale(delta) {
+  radarScale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, radarScale + delta));
+  document.getElementById("radar-scale-wrap").style.transform =
+    "scale(" + radarScale.toFixed(3) + ")";
+}
+
+// ctrl + mouse wheel
+document.getElementById("radar-box").addEventListener("wheel", function(e) {
+  if (!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault();
+  var delta = e.deltaY < 0 ? 0.1 : -0.1;
+  applyRadarScale(delta);
+}, { passive: false });
+
+// pinch on touch devices
+(function() {
+  var lastDist = null;
+  var wrap = document.getElementById("radar-box");
+
+  wrap.addEventListener("touchstart", function(e) {
+    if (e.touches.length === 2) {
+      var dx = e.touches[0].clientX - e.touches[1].clientX;
+      var dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastDist = Math.sqrt(dx*dx + dy*dy);
+    }
+  }, { passive: true });
+
+  wrap.addEventListener("touchmove", function(e) {
+    if (e.touches.length !== 2 || lastDist === null) return;
+    e.preventDefault();
+    var dx = e.touches[0].clientX - e.touches[1].clientX;
+    var dy = e.touches[0].clientY - e.touches[1].clientY;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+    var ratio = dist / lastDist;
+    // apply proportional scale change
+    var newScale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, radarScale * ratio));
+    radarScale = newScale;
+    document.getElementById("radar-scale-wrap").style.transform =
+      "scale(" + radarScale.toFixed(3) + ")";
+    lastDist = dist;
+  }, { passive: false });
+
+  wrap.addEventListener("touchend", function() { lastDist = null; }, { passive: true });
+})();
 
 // ── SCENARIO MODAL ─────────────────────────────────────────────────────────────
 function openScenarioModal(){
