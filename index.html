@@ -442,7 +442,7 @@ var WEDGES=[
   {id:"TEC", label:"Tech",                 color:"#b06eff"},
 ];
 var VALID_TRIGGERS=WEDGES.map(function(w){return w.id;});
-var INDICATORS=["Infl/Claims","GDP Growth","Int Rates","Credit Spreads","Commodity","Cyber","Op.Disruption"];
+var INDICATORS=["Inflation","GDP Growth","Int Rates","Credit Spreads / Own Funds","Commodity & Energy","Cyber / Silent Cyber","Op.Disruption (BI)"];
 
 // ── 5 DISCRETE SCORE COLORS ───────────────────────────────────────────────────
 // Clearly distinct: steel-blue → teal → amber → orange → crimson
@@ -491,74 +491,98 @@ function activeThemes(){
 }
 function wedgeColor(id){for(var i=0;i<WEDGES.length;i++)if(WEDGES[i].id===id)return WEDGES[i].color;return "#888";}
 
-// ── DATA ──────────────────────────────────────────────────────────────────────
+// ── SCORE COMPUTED AS MEAN OF IMPACT INDICATORS ───────────────────────────────
+function meanScore(scores){
+  var s=scores.reduce(function(a,b){return a+b;},0);
+  return Math.round((s/scores.length)*10)/10;
+}
+
 var DEFAULT_THEMES=[
-  {id:"T01",wedge:"MIL",upside:false,name:"Major disruption of Middle East energy supply",short:"M.East energy",
-   base:{score:2.0,th:10,thLabel:"9-12m",scores:[3,2,1,1,3,1,2]},
-   worst:{score:5.0,th:4,thLabel:"3-6m",scores:[5,3,3,4,5,2,4]},
-   baseNote:"Conflict contained, Hormuz operational. Marine and energy lines moderately affected. No systemic disruption.",
+  {id:"T01",wedge:"MIL",upside:false,
+   name:"Major disruption of Middle East energy supply",short:"M.East energy",
+   base: {scores:[3,2,1,1,3,1,2],th:10,thLabel:"9-12m"},
+   worst:{scores:[5,3,3,4,5,2,4],th:4, thLabel:"3-6m"},
+   baseNote: "Conflict contained, Hormuz operational. Marine and energy lines moderately affected. No systemic disruption.",
    worstNote:"Direct US engagement. Hormuz closure. Energy shock systemic — inflation hits all lines, Fed constrained."},
-  {id:"T02",wedge:"MIL",upside:false,name:"Large-scale military escalation in Eastern Europe",short:"E.Europe escalation",
-   base:{score:2.0,th:20,thLabel:"18-24m",scores:[2,2,1,2,2,1,1]},
-   worst:{score:4.0,th:7,thLabel:"6-9m",scores:[3,4,3,4,3,2,3]},
+  {id:"T02",wedge:"MIL",upside:false,
+   name:"Large-scale military escalation in Eastern Europe",short:"E.Europe escalation",
+   base: {scores:[2,2,1,2,2,1,1],th:20,thLabel:"18-24m"},
+   worst:{scores:[3,4,3,4,3,2,4],th:7, thLabel:"6-9m"},
    baseNote:"Stalemate holds. Contained sovereign credit stress in CEE, energy costs, industrial supply chain disruption.",
    worstNote:"US distracted by Iran. Russia sees window. Wider geography affected; sovereign spreads and defence spending shift materially."},
-  {id:"T03",wedge:"MIL",upside:false,name:"Military escalation in the Taiwan Strait",short:"Taiwan Strait",
-   base:{score:4.0,th:36,thLabel:"36m+",scores:[3,4,3,4,3,2,4]},
-   worst:{score:4.0,th:15,thLabel:"12-18m",scores:[4,5,3,5,4,2,5]},
+  {id:"T03",wedge:"MIL",upside:false,
+   name:"Military escalation in the Taiwan Strait",short:"Taiwan Strait",
+   base: {scores:[3,4,3,4,3,2,4],th:36,thLabel:"36m+"},
+   worst:{scores:[4,5,3,5,4,2,5],th:15,thLabel:"12-18m"},
    baseNote:"US deterrence intact. Score already high — consequences are severe regardless of timing.",
    worstNote:"Score unchanged — catastrophic impact already the base assessment. US distraction compresses timeline."},
-  {id:"T04",wedge:"FIN",upside:false,name:"Fed independence and US monetary policy shift",short:"Fed & policy shift",
-   base:{score:3.3,th:9,thLabel:"9m",scores:[4,3,5,4,2,1,2]},
-   worst:{score:4.5,th:5,thLabel:"3-6m",scores:[5,4,5,5,4,1,3]},
+  {id:"T04",wedge:"FIN",upside:false,
+   name:"Fed independence and US monetary policy shift",short:"Fed & policy shift",
+   base: {scores:[4,3,5,4,2,1,2],th:9, thLabel:"9m"},
+   worst:{scores:[5,4,5,5,4,1,3],th:5, thLabel:"3-6m"},
    baseNote:"New Fed Chair, bear steepening risk live. Duration-matched portfolios under pressure. Own funds volatility elevated.",
    worstNote:"Fed credibility loss triggers discontinuous bear steepening. USD reserve status questioned. All rate-sensitive lines hit simultaneously."},
-  {id:"T05",wedge:"FIN",upside:false,name:"US-EU trade war escalation",short:"US-EU tariffs",
-   base:{score:3.0,th:12,thLabel:"12m",scores:[4,4,3,3,3,1,3]},
-   worst:{score:4.0,th:7,thLabel:"6-9m",scores:[5,5,4,5,4,1,4]},
+  {id:"T05",wedge:"FIN",upside:false,
+   name:"US-EU trade war escalation",short:"US-EU tariffs",
+   base: {scores:[3,4,3,3,3,1,3],th:12,thLabel:"12m"},
+   worst:{scores:[5,5,4,5,4,1,4],th:7, thLabel:"6-9m"},
    baseNote:"Tariffs at 25%, EU non-coordinated. Claims inflation on imported goods, industrial supply chain.",
    worstNote:"Tariffs >35%, EU fails to coordinate. Shifts from actuarial to solvency problem — sovereign bond market stress."},
-  {id:"T06",wedge:"FIN",upside:false,name:"USD reserve status erosion",short:"USD erosion",
-   base:{score:2.5,th:24,thLabel:"24m",scores:[2,2,4,3,2,1,2]},
-   worst:{score:4.0,th:12,thLabel:"12m",scores:[2,3,5,4,3,1,2]},
+  {id:"T06",wedge:"FIN",upside:false,
+   name:"USD reserve status erosion",short:"USD erosion",
+   base: {scores:[2,2,4,3,2,1,2],th:24,thLabel:"24m"},
+   worst:{scores:[3,3,5,4,3,1,2],th:12,thLabel:"12m"},
    baseNote:"Gradual diversification away from USD by central banks. Slow-moving structural shift.",
    worstNote:"Discontinuous confidence loss triggered by debt ceiling crisis or Fed shock. Capital flows reverse rapidly."},
-  {id:"T07",wedge:"HYB",upside:false,name:"Systemic cyber attack on financial infrastructure",short:"Systemic cyber",
-   base:{score:3.3,th:12,thLabel:"12m",scores:[3,3,3,4,2,5,5]},
-   worst:{score:4.5,th:6,thLabel:"6m",scores:[3,3,3,4,2,5,5]},
+  {id:"T07",wedge:"HYB",upside:false,
+   name:"Systemic cyber attack on financial infrastructure",short:"Systemic cyber",
+   base: {scores:[3,3,3,4,2,5,5],th:12,thLabel:"12m"},
+   worst:{scores:[3,3,3,4,2,5,5],th:6, thLabel:"6m"},
    baseNote:"State-sponsored cyber increasing in frequency. Silent cyber accumulation elevated.",
    worstNote:"Coordinated multi-institution attack. Systemic silent cyber losses materialise; correlated BI claims across sectors."},
-  {id:"T08",wedge:"HYB",upside:false,name:"EU dependency on US cloud and IT providers",short:"EU cloud risk",
-   base:{score:2.4,th:24,thLabel:"18-24m",scores:[2,2,2,2,1,4,4]},
-   worst:{score:3.0,th:12,thLabel:"12m",scores:[2,2,2,2,1,4,4]},
+  {id:"T08",wedge:"HYB",upside:false,
+   name:"EU dependency on US cloud and IT providers",short:"EU cloud risk",
+   base: {scores:[2,2,2,2,1,4,4],th:24,thLabel:"18-24m"},
+   worst:{scores:[2,2,2,2,1,4,4],th:12,thLabel:"12m"},
    baseNote:"Geopolitical tensions raise data sovereignty questions. DORA pressure increasing but transition timelines long.",
    worstNote:"US-EU breakdown triggers abrupt restrictions on cross-border data flows. No viable alternatives in place."},
-  {id:"T09",wedge:"ENE",upside:false,name:"European energy supply disruption",short:"EU energy",
-   base:{score:2.5,th:18,thLabel:"18m",scores:[3,3,2,2,4,1,3]},
-   worst:{score:4.0,th:9,thLabel:"9m",scores:[5,4,3,3,5,1,4]},
+  {id:"T09",wedge:"ENE",upside:false,
+   name:"European energy supply disruption",short:"EU energy",
+   base: {scores:[3,3,2,2,4,1,3],th:18,thLabel:"18m"},
+   worst:{scores:[5,4,3,3,5,1,4],th:9, thLabel:"9m"},
    baseNote:"Structural vulnerability remains. Winter demand spikes manageable. Claims inflation from energy costs moderate.",
    worstNote:"Renewed disruption from Eastern Europe escalation or infrastructure sabotage. Energy prices spike; industrial lines hit."},
-  {id:"T10",wedge:"ENE",upside:false,name:"China supply chain and rare earth disruption",short:"China REE",
-   base:{score:2.9,th:12,thLabel:"12m",scores:[3,3,3,3,3,2,4]},
-   worst:{score:3.5,th:7,thLabel:"6-9m",scores:[3,3,3,3,4,3,5]},
+  {id:"T10",wedge:"ENE",upside:false,
+   name:"China supply chain and rare earth disruption",short:"China REE",
+   base: {scores:[3,3,3,3,3,2,4],th:12,thLabel:"12m"},
+   worst:{scores:[3,3,3,3,4,3,5],th:7, thLabel:"6-9m"},
    baseNote:"China restricting critical minerals as leverage. Near-term impact limited to specific industrial sectors.",
    worstNote:"Significant escalation across REE, semiconductors, critical components. Industrial BI and trade credit become correlated."},
-  {id:"T11",wedge:"POL",upside:false,name:"European governance fragmentation",short:"EU governance",
-   base:{score:3.1,th:18,thLabel:"18m",scores:[2,3,3,4,2,1,2]},
-   worst:{score:4.0,th:9,thLabel:"9m",scores:[2,4,4,5,2,1,3]},
+  {id:"T11",wedge:"POL",upside:false,
+   name:"European governance fragmentation",short:"EU governance",
+   base: {scores:[2,3,3,4,2,1,2],th:18,thLabel:"18m"},
+   worst:{scores:[2,4,5,5,2,1,3],th:9, thLabel:"9m"},
    baseNote:"Far-right gains in key member states but collective EU decision-making functional. Spreads elevated but stable.",
-   worstNote:"Political crisis blocks collective EU response on defence or fiscal. Sovereign spreads widen sharply."},
-  {id:"T12",wedge:"POL",upside:false,name:"Social unrest and political polarisation in Europe",short:"EU social unrest",
-   base:{score:2.7,th:18,thLabel:"18m",scores:[2,3,2,2,2,1,2]},
-   worst:{score:3.3,th:10,thLabel:"9-12m",scores:[3,4,2,3,3,1,3]},
+   worstNote:"Political crisis blocks collective EU response on defence or fiscal. Sovereign spreads and rates surge sharply."},
+  {id:"T12",wedge:"POL",upside:false,
+   name:"Social unrest and political polarisation in Europe",short:"EU social unrest",
+   base: {scores:[2,3,2,2,2,1,2],th:18,thLabel:"18m"},
+   worst:{scores:[4,4,2,3,3,1,3],th:10,thLabel:"9-12m"},
    baseNote:"Fiscal consolidation and migration tensions driving localised unrest. Limited direct insurance impact.",
    worstNote:"Large-scale unrest in multiple countries — property damage, BI losses, operational disruption for retail distribution."},
-  {id:"T13",wedge:"TEC",upside:false,name:"AI market crash and algorithmic contagion",short:"AI market crash",
-   base:{score:3.4,th:18,thLabel:"18m",scores:[3,4,4,5,2,2,3]},
-   worst:{score:4.5,th:12,thLabel:"12m",scores:[3,5,4,5,2,2,4]},
+  {id:"T13",wedge:"TEC",upside:false,
+   name:"AI market crash and algorithmic contagion",short:"AI market crash",
+   base: {scores:[3,4,4,5,2,2,3],th:18,thLabel:"18m"},
+   worst:{scores:[3,5,4,5,2,2,4],th:12,thLabel:"12m"},
    baseNote:"AI concentration risk building. Equity market exposure elevated. Own funds sensitive to tech sector correction.",
    worstNote:"AI contagion in market already stressed by bear steepening creates cascading credit spread widening."},
 ];
+
+// inject computed scores
+DEFAULT_THEMES.forEach(function(t){
+  t.base.score  = meanScore(t.base.scores);
+  t.worst.score = meanScore(t.worst.scores);
+});
 
 // ── STATE ──────────────────────────────────────────────────────────────────────
 var scenario='base', selectedId=null, thFilter='all';
@@ -958,23 +982,32 @@ function setThFilter(val){
 
 // ── EXCEL UPLOAD ───────────────────────────────────────────────────────────────
 var REQUIRED_COLS=["trigger","theme_name","score_base","score_worst","th_base_months","th_worst_months"];
+var IND_COLS_BASE =["ind_1_base","ind_2_base","ind_3_base","ind_4_base","ind_5_base","ind_6_base","ind_7_base"];
+var IND_COLS_WORST=["ind_1_worst","ind_2_worst","ind_3_worst","ind_4_worst","ind_5_worst","ind_6_worst","ind_7_worst"];
+
 function handleFileUpload(e){
   var file=e.target.files[0];e.target.value="";if(!file)return;
   var reader=new FileReader();
   reader.onload=function(ev){
     try{
       var wb=XLSX.read(ev.target.result,{type:"array"});
-      var ws=wb.Sheets[wb.SheetNames[0]];
+      var sheetName="Upload Ready";
+      if(wb.SheetNames.indexOf(sheetName)===-1) sheetName=wb.SheetNames[0];
+      var ws=wb.Sheets[sheetName];
       validateAndLoad(XLSX.utils.sheet_to_json(ws,{defval:""}));
     }catch(err){showError(["Could not parse file: "+err.message]);}
   };
   reader.readAsArrayBuffer(file);
 }
+
 function validateAndLoad(rows){
   var errors=[];
   if(!rows.length){showError(["File is empty."]);return;}
-  var missing=REQUIRED_COLS.filter(function(c){return Object.keys(rows[0]).indexOf(c)===-1;});
-  if(missing.length){showError(["Missing columns: "+missing.join(", "),"Expected: "+REQUIRED_COLS.join(", ")]);return;}
+  var cols=Object.keys(rows[0]);
+  var missing=REQUIRED_COLS.filter(function(c){return cols.indexOf(c)===-1;});
+  if(missing.length){showError(["Missing required columns: "+missing.join(", "),"Expected: "+REQUIRED_COLS.join(", ")]);return;}
+  var hasIndBase =IND_COLS_BASE.every(function(c){return cols.indexOf(c)!==-1;});
+  var hasIndWorst=IND_COLS_WORST.every(function(c){return cols.indexOf(c)!==-1;});
   rows.forEach(function(row,i){
     var rn="Row "+(i+2)+": ";
     if(VALID_TRIGGERS.indexOf(String(row.trigger||"").trim().toUpperCase())===-1)
@@ -984,17 +1017,30 @@ function validateAndLoad(rows){
     var thb=parseInt(row.th_base_months),thw=parseInt(row.th_worst_months);
     if(isNaN(sb)||sb<1||sb>5) errors.push(rn+"score_base '"+row.score_base+"' must be 1.0–5.0.");
     if(isNaN(sw)||sw<1||sw>5) errors.push(rn+"score_worst '"+row.score_worst+"' must be 1.0–5.0.");
-    if(isNaN(thb)||thb<=0)    errors.push(rn+"th_base_months must be a positive integer.");
-    if(isNaN(thw)||thw<=0)    errors.push(rn+"th_worst_months must be a positive integer.");
+    if(isNaN(thb)||thb<=0) errors.push(rn+"th_base_months must be a positive integer.");
+    if(isNaN(thw)||thw<=0) errors.push(rn+"th_worst_months must be a positive integer.");
+    if(hasIndBase) IND_COLS_BASE.forEach(function(c){
+      var v=parseFloat(row[c]);
+      if(isNaN(v)||v<1||v>5) errors.push(rn+c+" '"+row[c]+"' must be 1–5.");
+    });
+    if(hasIndWorst) IND_COLS_WORST.forEach(function(c){
+      var v=parseFloat(row[c]);
+      if(isNaN(v)||v<1||v>5) errors.push(rn+c+" '"+row[c]+"' must be 1–5.");
+    });
   });
   if(errors.length){showError(errors);return;}
   closeError();
   THEMES=rows.map(function(row,i){
     var sb=parseFloat(row.score_base),sw=parseFloat(row.score_worst);
+    var thb=Math.min(parseInt(row.th_base_months),36);
+    var thw=Math.min(parseInt(row.th_worst_months),36);
+    var bscores=hasIndBase ?IND_COLS_BASE.map(function(c){return parseFloat(row[c])||0;}):[0,0,0,0,0,0,0];
+    var wscores=hasIndWorst?IND_COLS_WORST.map(function(c){return parseFloat(row[c])||0;}):[0,0,0,0,0,0,0];
+    var shortName=String(row.theme_name).trim();
     return{id:"U"+(i+1),wedge:String(row.trigger).trim().toUpperCase(),upside:sw<sb,
-      name:String(row.theme_name).trim(),short:String(row.theme_name).trim().substring(0,22),
-      base:{score:sb,th:parseInt(row.th_base_months),thLabel:row.th_base_months+"m",scores:[0,0,0,0,0,0,0]},
-      worst:{score:sw,th:parseInt(row.th_worst_months),thLabel:row.th_worst_months+"m",scores:[0,0,0,0,0,0,0]},
+      name:shortName,short:shortName.substring(0,22),
+      base:{score:sb,th:thb,thLabel:thb+"m",scores:bscores},
+      worst:{score:sw,th:thw,thLabel:thw+"m",scores:wscores},
       baseNote:"Imported from Excel.",worstNote:"Imported from Excel."};
   });
   selectedId=null;renderPanel();drawRadar();renderLegend();
