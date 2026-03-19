@@ -106,8 +106,8 @@ font-size:8px; flex-wrap:wrap; font-family:monospace;
 
 /* ── BOTTOM LEGEND ── */
 #bottom-legend {
-margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;
-padding:9px 14px; background:#0b1525; border-radius:9px;
+margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;
+padding:7px 10px; background:#0b1525; border-radius:9px;
 border:1px solid #1a3050; font-size:9px; align-items:center;
 }
 .leg-label { color:#2a4a6a; font-weight:700; font-size:8.5px; letter-spacing:1px; text-transform:uppercase; }
@@ -279,22 +279,13 @@ pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.
     <div id="scenario-badge"></div>
     <div id="radar-scale-wrap">
       <svg id="radar-svg" viewBox="-90 -90 860 860" xmlns="http://www.w3.org/2000/svg"></svg>
-      <div id="ring-legend">
-        <span><b>6m</b> Near-term</span>
-        <span><b>12m</b> Short</span>
-        <span><b>18m</b> Medium</span>
-        <span><b>24m</b> Long</span>
-        <span><b>30m</b> Extended</span>
-        <span><b>36m+</b> Distant</span>
+      <div id="bottom-legend">
+        <span class="leg-label">Impact:</span>
+        <div id="wedge-legend" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"></div>
       </div>
     </div>
   </div>
   <div id="panel"></div>
-</div>
-
-<div id="bottom-legend">
-  <span class="leg-label">Impact:</span>
-  <div id="wedge-legend" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"></div>
 </div>
 
 <!-- ── SCENARIO & SEI MODAL ── -->
