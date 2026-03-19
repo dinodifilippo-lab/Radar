@@ -506,11 +506,11 @@ function meanScore(scores){
 
 var DEFAULT_THEMES=[
   {id:"T01",wedge:"MIL",upside:false,
-   name:"Major disruption of Middle East energy supply",short:"M.East energy",
+   name:"Iran-triggered energy shock",short:"Iran energy shock",
    base: {scores:[3,2,1,1,3,1,2],th:10,thLabel:"9-12m"},
    worst:{scores:[5,3,3,4,5,2,4],th:4, thLabel:"3-6m"},
-   baseNote: "Conflict contained, Hormuz operational. Marine and energy lines moderately affected. No systemic disruption.",
-   worstNote:"Direct US engagement. Hormuz closure. Energy shock systemic — inflation hits all lines, Fed constrained."},
+   baseNote:"Conflict contained, Hormuz operational. Marine and energy lines moderately affected. Iranian proxies active but no direct escalation materialised.",
+   worstNote:"Direct US-Iran military engagement triggers Hormuz closure. Energy shock systemic — inflation hits all lines simultaneously, Fed flexibility constrained."},
   {id:"T02",wedge:"MIL",upside:false,
    name:"Large-scale military escalation in Eastern Europe",short:"E.Europe escalation",
    base: {scores:[2,2,1,2,2,1,1],th:20,thLabel:"18-24m"},
@@ -583,6 +583,18 @@ var DEFAULT_THEMES=[
    worst:{scores:[3,5,4,5,2,2,4],th:12,thLabel:"12m"},
    baseNote:"AI concentration risk building. Equity market exposure elevated. Own funds sensitive to tech sector correction.",
    worstNote:"AI contagion in market already stressed by bear steepening creates cascading credit spread widening."},
+  {id:"T14",wedge:"ENE",upside:false,
+   name:"Red Sea / Suez shipping disruption",short:"Red Sea shipping",
+   base: {scores:[3,2,1,2,3,1,4],th:9, thLabel:"9m"},
+   worst:{scores:[4,3,2,3,4,2,5],th:5, thLabel:"3-6m"},
+   baseNote:"Houthi attacks ongoing. Shipping rerouted around Cape of Good Hope — elevated transit times and costs already embedded. Marine insurance losses active; BI exposure building for import-dependent sectors.",
+   worstNote:"Sustained closure of Suez-Red Sea corridor for major carriers. Marine and cargo losses spike. Supply chain BI across European manufacturing and retail becomes systemic. Combined with Iran energy shock, shipping stress amplifies commodity inflation."},
+  {id:"T15",wedge:"ENE",upside:false,
+   name:"Middle East sovereign and political risk contagion",short:"ME sovereign risk",
+   base: {scores:[2,2,3,3,2,1,1],th:18,thLabel:"18m"},
+   worst:{scores:[3,3,4,4,3,1,2],th:9, thLabel:"9m"},
+   baseNote:"Oil-linked sovereign creditworthiness under moderate pressure. Gulf states fiscal buffers intact. EM sovereign spreads elevated but contained. Limited direct insurance balance sheet impact at current conditions.",
+   worstNote:"Sustained energy price shock erodes fiscal buffers of oil-importing EM sovereigns. Political instability spreads to Gulf states. Credit spread widening on EM sovereign bonds impacts investment portfolios. Petrostate contagion channels into European bank and insurer exposures."},
 ];
 
 // inject computed scores
