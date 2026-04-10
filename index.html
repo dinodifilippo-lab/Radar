@@ -1,544 +1,403 @@
-<!DOCTYPE html>
-
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GeoRisk What-If Simulator v3.2 — CRO Forum 2026</title>
+<title>Geopolitical Risk Radar — CRO Forum 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
-
-:root {
-–bg0: #07101e;
-–bg1: #0b1727;
-–bg2: #0f1e33;
-–bg3: #142440;
-–border: #1a3050;
-–border2: #243d5c;
-–text: #c8d8e8;
-–muted: #4a6a88;
-–accent: #4a9eff;
-–red: #ff4444;
-–amber: #ffaa20;
-–green: #30d880;
-–mil: #ff5555;
-–fin: #ff9040;
-–hyb: #f0d020;
-–ene: #40cc80;
-–pol: #4aa8e8;
-–tec: #b06eff;
-}
-
 body {
-background: var(–bg0);
-color: var(–text);
-font-family: ‘Segoe UI’, system-ui, sans-serif;
-min-height: 100vh;
-padding: 16px 20px;
-user-select: none;
+  background:#08111f;
+  color:#dde6f0;
+  font-family:'Segoe UI',Arial,sans-serif;
+  min-height:100vh;
+  padding:18px 22px;
+  user-select:none;
 }
-
-/* ── HEADER ── */
-.header {
-display: flex;
-justify-content: space-between;
-align-items: flex-end;
-margin-bottom: 16px;
-flex-wrap: wrap;
-gap: 10px;
+button { font-family:inherit; cursor:pointer; }/* ── HEADER ── */
+#header {
+margin-bottom:14px;
+display:flex; justify-content:space-between; align-items:flex-end;
+flex-wrap:wrap; gap:10px;
 }
-.header-left .eyebrow {
-font-size: 9px;
-letter-spacing: 3px;
-color: var(–accent);
-text-transform: uppercase;
-margin-bottom: 4px;
+#header h1 {
+margin:0; font-size:21px; font-weight:700;
+color:#ffffff; letter-spacing:0.3px;
 }
-.header-left h1 {
-font-size: 20px;
-font-weight: 700;
-color: #fff;
-letter-spacing: 0.2px;
+.sub1 {
+font-size:9.5px; letter-spacing:3px; color:#4a9eff;
+text-transform:uppercase; margin-bottom:4px;
 }
-.header-left .sub {
-font-size: 10px;
-color: var(–muted);
-margin-top: 3px;
+.sub2 { font-size:10px; color:#4a6080; margin-top:3px; }
+/* ── CONTROLS ── */
+#controls { display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+.toggle-group {
+background:#0d1e33; border-radius:7px; padding:3px;
+display:flex; border:1px solid #1e3a5f;
 }
-.reset-btn {
-padding: 7px 16px;
-border-radius: 7px;
-border: 1px solid var(–border2);
-background: var(–bg2);
-color: var(–muted);
-font-size: 10px;
-font-weight: 600;
-cursor: pointer;
-letter-spacing: 0.5px;
-transition: all .2s;
+.toggle-btn {
+padding:5px 14px; border-radius:5px; border:none;
+font-size:10px; font-weight:600; background:transparent;
+color:#4a6080; transition:all .2s;
 }
-.reset-btn:hover { border-color: var(–accent); color: var(–accent); }
-
-/* ── LAYOUT ── */
-.layout {
-display: grid;
-grid-template-columns: 300px 1fr;
-gap: 14px;
-align-items: start;
+.toggle-btn.active-base  { background:#1558c0; color:#fff; }
+.toggle-btn.active-worst { background:#a01818; color:#fff; }
+.ctrl-btn {
+padding:5px 12px; border-radius:6px;
+border:1px solid #1e3a5f; background:#0d1e33;
+color:#4a6080; font-size:10px; font-weight:600;
+transition:all .2s;
 }
-
-/* ── LEFT: SLIDERS ── */
-.sliders-panel {
-background: var(–bg1);
-border: 1px solid var(–border);
-border-radius: 12px;
-overflow: hidden;
+.ctrl-btn:hover { border-color:#4a9eff; color:#93c5fd; }
+/* ── TH FILTER ── */
+.th-filter-group {
+background:#0d1e33; border-radius:7px; padding:3px;
+display:flex; border:1px solid #1e3a5f; gap:2px;
 }
-.sliders-header {
-padding: 12px 16px;
-border-bottom: 1px solid var(–border);
-font-size: 9px;
-letter-spacing: 2px;
-text-transform: uppercase;
-color: var(–muted);
-font-weight: 700;
+.th-filter-btn {
+padding:5px 11px; border-radius:5px; border:none;
+font-size:10px; font-weight:600; background:transparent;
+color:#4a6080; transition:all .2s; white-space:nowrap;
+cursor:pointer;
 }
-.wedge-section { border-bottom: 1px solid var(–border); }
-.wedge-section:last-child { border-bottom: none; }
-.wedge-label {
-padding: 8px 16px 4px;
-font-size: 8.5px;
-font-weight: 700;
-letter-spacing: 2px;
-text-transform: uppercase;
+.th-filter-btn.active { background:#1a3a5a; color:#4a9eff; }
+#file-input { display:none; }
+/* ── MAIN ── */
+#main { display:grid; grid-template-columns:1fr; gap:14px; }
+#main.with-panel { grid-template-columns:1fr 320px; }
+/* ── RADAR BOX ── */
+#radar-box {
+background:#0b1525;
+border:1px solid #1a3050;
+border-radius:12px;
+padding:10px 4px 8px;
+position:relative;
+overflow:hidden;
 }
-.slider-row {
-padding: 6px 16px 8px;
-display: flex;
-flex-direction: column;
-gap: 4px;
+#scenario-badge {
+position:absolute; top:10px; left:12px;
+font-size:9px; border-radius:4px; padding:2px 7px; display:none;
+z-index:5;
 }
-.slider-meta {
-display: flex;
-justify-content: space-between;
-align-items: center;
+#radar-scale-wrap {
+width:100%;
+transform-origin: center top;
+transition: transform 0.15s ease;
 }
-.slider-name {
-font-size: 9.5px;
-color: var(–text);
-font-weight: 500;
+#radar-svg { display:block; width:100%; }
+/* ── RING LEGEND ── */
+#ring-legend {
+display:flex; justify-content:center; gap:14px; margin-top:4px;
+font-size:8px; flex-wrap:wrap; font-family:monospace;
 }
-.slider-val {
-font-size: 9px;
-font-family: monospace;
-font-weight: 700;
-min-width: 60px;
-text-align: right;
+#ring-legend span { color:#2a4a6a; }
+#ring-legend span b { color:#4a9eff; }
+/* ── BOTTOM LEGEND ── */
+#bottom-legend {
+margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;
+padding:7px 10px; background:#0b1525; border-radius:9px;
+border:1px solid #1a3050; font-size:9px; align-items:center;
 }
-.slider-track {
-position: relative;
-height: 20px;
-display: flex;
-align-items: center;
+.leg-label { color:#2a4a6a; font-weight:700; font-size:8.5px; letter-spacing:1px; text-transform:uppercase; }
+.leg-sep { width:1px; height:16px; background:#1a3050; margin:0 2px; }
+.leg-item { color:#4a6080; display:flex; align-items:center; gap:5px; }
+/* ── DETAIL PANEL ── */
+#panel {
+background:#0b1525; border:1px solid #1a3050; border-radius:12px;
+padding:16px; display:none; flex-direction:column;
+gap:11px; overflow-y:auto; max-height:740px;
 }
-input[type=range] {
--webkit-appearance: none;
-width: 100%;
-height: 4px;
-border-radius: 2px;
-outline: none;
-cursor: pointer;
-background: var(–bg3);
+#panel.visible { display:flex; }
+.panel-cat { font-size:8px; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:3px; }
+.panel-title { font-size:13px; font-weight:700; color:#ffffff; line-height:1.35; margin-bottom:5px; }
+.score-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.score-card { border-radius:7px; padding:9px 11px; }
+.score-card .sc-lbl { font-size:8px; color:#3a5570; margin-bottom:3px; }
+.score-card .sc-val { font-size:26px; font-weight:700; line-height:1; }
+.score-card .sc-th  { font-size:8px; color:#2a4050; margin-top:3px; }
+.delta-badge { border-radius:6px; padding:6px 11px; font-size:10px; text-align:center; font-weight:600; }
+.note-box {
+background:#0d1e33; border:1px solid #1a3050; border-radius:7px;
+padding:9px 11px; font-size:9px; color:#4a6a80; line-height:1.65; font-style:italic;
 }
-input[type=range]::-webkit-slider-thumb {
--webkit-appearance: none;
-width: 14px;
-height: 14px;
-border-radius: 50%;
-border: 2px solid var(–bg0);
-cursor: pointer;
-transition: transform .15s;
+.note-box b { color:#5a7a90; font-style:normal; }
+.spider-label { font-size:8.5px; color:#3a5570; margin-bottom:3px; }
+.indicator-table { font-size:9px; }
+.ind-header {
+display:grid; grid-template-columns:1fr 30px 30px 30px;
+gap:3px; color:#2a4050; padding-bottom:5px;
+border-bottom:1px solid #1a3050; margin-bottom:3px;
 }
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-.baseline-tick {
-position: absolute;
-width: 2px;
-height: 10px;
-background: var(–muted);
-border-radius: 1px;
-top: 50%;
-transform: translateY(-50%);
-pointer-events: none;
-opacity: 0.5;
+.ind-row {
+display:grid; grid-template-columns:1fr 30px 30px 30px;
+gap:3px; padding:2px 0; align-items:center;
 }
-
-/* ── RIGHT: RADAR + RIPPLE ── */
-.right-panel {
-display: flex;
-flex-direction: column;
-gap: 14px;
+.ind-name  { color:#3a5570; font-size:8px; }
+.ind-val   { text-align:center; font-weight:600; }
+.ind-delta { text-align:center; font-size:8px; font-weight:600; }
+.panel-close { background:none; border:none; color:#3a5570; font-size:16px; padding:0; line-height:1; margin-left:6px; cursor:pointer; }
+.panel-top-row { display:flex; justify-content:space-between; align-items:flex-start; }
+/* ── ERROR PANEL ── */
+#error-panel {
+display:none; background:#180808; border:1px solid #6b1a1a;
+border-radius:9px; padding:12px 16px; margin-bottom:10px;
+font-size:11px; color:#fca5a5;
 }
-
-/* ── RADAR ── */
-.radar-box {
-background: var(–bg1);
-border: 1px solid var(–border);
-border-radius: 12px;
-padding: 10px 4px 10px;
+#error-panel .err-title { font-weight:700; color:#ef4444; font-size:12px; margin-bottom:7px; }
+#error-panel .err-item  { margin-bottom:3px; padding-left:10px; }
+#error-panel .err-close { float:right; background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; }
+/* ── SCENARIO MODAL ── */
+#scenario-modal-overlay {
+display:none; position:fixed; inset:0;
+background:rgba(0,0,0,0.75); z-index:10000;
+align-items:flex-start; justify-content:center;
+padding:30px 20px; overflow-y:auto;
 }
-#radar-svg { display: block; width: 100%; }
-
-/* ── RIPPLE TABLE ── */
-.ripple-box {
-background: var(–bg1);
-border: 1px solid var(–border);
-border-radius: 12px;
-overflow: hidden;
+#scenario-modal-overlay.open { display:flex; }
+#scenario-modal {
+background:#0b1525; border:1px solid #1a3050; border-radius:14px;
+width:100%; max-width:860px; padding:0; overflow:hidden;
+box-shadow:0 24px 80px rgba(0,0,0,0.6);
 }
-.ripple-header {
-padding: 12px 16px;
-border-bottom: 1px solid var(–border);
-display: flex;
-justify-content: space-between;
-align-items: center;
+.sm-header {
+padding:18px 24px 14px;
+border-bottom:1px solid #1a3050;
+display:flex; justify-content:space-between; align-items:center;
 }
-.ripple-header h3 {
-font-size: 9px;
-letter-spacing: 2px;
-text-transform: uppercase;
-color: var(–muted);
-font-weight: 700;
+.sm-header h2 { font-size:15px; font-weight:700; color:#fff; margin:0; }
+.sm-header .sm-date { font-size:9px; color:#3a5570; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+.sm-close { background:none; border:none; color:#3a5570; font-size:20px; cursor:pointer; padding:0; line-height:1; }
+.sm-close:hover { color:#fff; }
+.sm-body { padding:20px 24px; display:flex; flex-direction:column; gap:18px; }
+/* scenario narrative cards */
+.sc-narrative {
+border-radius:9px; padding:16px 18px;
+border-left:4px solid transparent;
 }
-.ripple-header .ripple-sub {
-font-size: 8.5px;
-color: var(–muted);
-opacity: 0.6;
+.sc-narrative.base-card {
+background:#0d1e33; border-left-color:#4a9eff;
 }
-.ripple-grid {
-padding: 12px 16px;
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-gap: 8px;
+.sc-narrative.worst-card {
+background:#1a0a0a; border-left-color:#ff4040;
 }
-.ripple-card {
-background: var(–bg2);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 10px 12px;
-transition: all .3s;
+.sc-narrative .sc-badge {
+font-size:8px; font-weight:700; letter-spacing:2.5px;
+text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:8px;
 }
-.ripple-card.active {
-border-color: var(–border2);
+.sc-narrative.base-card  .sc-badge { color:#4a9eff; }
+.sc-narrative.worst-card .sc-badge { color:#ff4040; }
+.sc-narrative .sc-text { font-size:11px; color:#8aa8c8; line-height:1.7; }
+.sc-narrative.worst-card .sc-text { color:#c89898; }
+/* SEI table */
+.sei-section h3 {
+font-size:9px; font-weight:700; letter-spacing:2px;
+text-transform:uppercase; color:#ffc040; margin-bottom:10px;
 }
-.ripple-card.moved-up {
-border-color: rgba(255,68,68,0.4);
-background: rgba(255,68,68,0.04);
+.sei-table { width:100%; border-collapse:collapse; font-size:10px; }
+.sei-table th {
+text-align:left; padding:6px 10px;
+font-size:8px; font-weight:700; letter-spacing:1px;
+text-transform:uppercase; color:#2a4a6a;
+border-bottom:1px solid #1a3050;
 }
-.ripple-card.moved-down {
-border-color: rgba(48,216,128,0.4);
-background: rgba(48,216,128,0.04);
+.sei-table td {
+padding:8px 10px; border-bottom:1px solid #0f1e2e;
+vertical-align:top; color:#6a8aa8; font-size:10px;
 }
-.rc-head {
-display: flex;
-justify-content: space-between;
-align-items: flex-start;
-margin-bottom: 6px;
+.sei-table td:first-child { color:#aac4d8; font-weight:500; }
+.sei-table tr:last-child td { border-bottom:none; }
+.sei-status {
+display:inline-block; padding:2px 8px; border-radius:10px;
+font-size:8.5px; font-weight:700; letter-spacing:0.5px;
 }
-.rc-name {
-font-size: 9.5px;
-color: var(–text);
-font-weight: 600;
-line-height: 1.3;
-flex: 1;
-}
-.rc-wedge {
-font-size: 7.5px;
-font-weight: 700;
-letter-spacing: 1px;
-padding: 1px 5px;
-border-radius: 3px;
-margin-left: 6px;
-flex-shrink: 0;
-}
-.rc-scores {
-display: flex;
-align-items: center;
-gap: 6px;
-font-family: monospace;
-font-size: 10px;
-}
-.rc-base { color: var(–muted); }
-.rc-arrow { color: var(–muted); font-size: 9px; }
-.rc-new { font-weight: 700; }
-.rc-delta {
-font-size: 8.5px;
-font-weight: 700;
-margin-left: auto;
-}
-.rc-th-change {
-margin-top: 4px;
-font-size: 8px;
-color: var(–muted);
-}
-
-/* ── NARRATIVE BOX ── */
-.narrative-box {
-background: var(–bg1);
-border: 1px solid var(–border);
-border-radius: 12px;
-padding: 14px 16px;
-}
-.narrative-box h3 {
-font-size: 9px;
-letter-spacing: 2px;
-text-transform: uppercase;
-color: var(–muted);
-font-weight: 700;
-margin-bottom: 10px;
-}
-.narrative-content {
-font-size: 10px;
-color: #8aa8c8;
-line-height: 1.8;
-}
-.narrative-content .no-change {
-color: var(–muted);
-font-style: italic;
-}
-.narrative-content .trigger-line {
-margin-bottom: 6px;
-padding-left: 10px;
-border-left: 2px solid var(–border2);
-}
-.narrative-content .trigger-line.up { border-left-color: var(–red); }
-.narrative-content .trigger-line.down { border-left-color: var(–green); }
-
+.sei-green  { background:#0a2a12; color:#40d890; border:1px solid #40d89040; }
+.sei-amber  { background:#2a1a00; color:#ffc040; border:1px solid #ffc04040; }
+.sei-red    { background:#2a0808; color:#ff4040; border:1px solid #ff404040; }
+.sei-note { font-size:8.5px; color:#3a5570; margin-top:18px; font-style:italic; }
 #tooltip {
-position: fixed;
-background: #0d1e33;
-border: 1px solid #1e3a5f;
-border-radius: 5px;
-padding: 5px 9px;
-font-size: 11px;
-color: #dde6f0;
-pointer-events: none;
-z-index: 9999;
-display: none;
-max-width: 200px;
-line-height: 1.5;
+position:fixed; background:#0d1e33; border:1px solid #1e3a5f;
+border-radius:5px; padding:5px 9px; font-size:11px; color:#dde6f0;
+pointer-events:none; z-index:9999; display:none; max-width:210px; line-height:1.5;
 }
-
-/* ── CALIBRATION MODAL ── */
-#cal-overlay {
-display: none;
-position: fixed;
-inset: 0;
-background: rgba(0,0,0,0.8);
-z-index: 10000;
-align-items: flex-start;
-justify-content: center;
-padding: 24px 16px;
-overflow-y: auto;
-}
-#cal-overlay.open { display: flex; }
-#cal-modal {
-background: #0b1727;
-border: 1px solid #1a3050;
-border-radius: 14px;
-width: 100%;
-max-width: 820px;
-overflow: hidden;
-box-shadow: 0 24px 80px rgba(0,0,0,0.7);
-}
-.cal-header {
-padding: 16px 22px;
-border-bottom: 1px solid #1a3050;
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-.cal-header h2 { font-size: 14px; font-weight: 700; color: #fff; }
-.cal-header p  { font-size: 9px; color: #4a6a88; margin-top: 3px; letter-spacing: 0.5px; }
-.cal-close {
-background: none; border: none; color: #4a6a88;
-font-size: 20px; cursor: pointer; line-height: 1;
-}
-.cal-close:hover { color: #fff; }
-.cal-body { padding: 16px 22px; display: flex; flex-direction: column; gap: 6px; max-height: 70vh; overflow-y: auto; }
-
-/* group header */
-.cal-group-label {
-font-size: 8px;
-font-weight: 700;
-letter-spacing: 2px;
-text-transform: uppercase;
-padding: 10px 0 4px;
-border-bottom: 1px solid #1a3050;
-margin-bottom: 2px;
-}
-
-/* relation row */
-.cal-row {
-display: grid;
-grid-template-columns: 130px 1fr 90px 90px 24px;
-gap: 8px;
-align-items: center;
-padding: 7px 10px;
-background: #0f1e33;
-border-radius: 7px;
-border: 1px solid #1a3050;
-}
-.cal-row:hover { border-color: #243d5c; }
-.cal-from { font-size: 9px; color: #8aa8c8; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal-to   { font-size: 8.5px; color: #4a6a88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal-narrative { font-size: 8px; color: #3a5570; line-height: 1.4; grid-column: 1 / -1; padding-top: 2px; display: none; font-style: italic; }
-.cal-row:hover .cal-narrative { display: block; }
-
-.cal-slider-group { display: flex; flex-direction: column; gap: 3px; }
-.cal-slider-label { font-size: 7.5px; color: #3a5570; display: flex; justify-content: space-between; }
-.cal-slider-label span { color: #4a9eff; font-family: monospace; font-weight: 700; }
-input.cal-range {
--webkit-appearance: none;
-width: 100%;
-height: 3px;
-border-radius: 2px;
-background: #142440;
-outline: none;
-cursor: pointer;
-accent-color: #4a9eff;
-}
-input.cal-range.th-range { accent-color: #ffc040; }
-input.cal-range::-webkit-slider-thumb {
--webkit-appearance: none;
-width: 11px; height: 11px;
-border-radius: 50%;
-border: 2px solid #07101e;
-cursor: pointer;
-}
-
-.cal-delete {
-background: none; border: none; color: #2a4050;
-font-size: 14px; cursor: pointer; padding: 0; line-height: 1;
-transition: color .2s;
-}
-.cal-delete:hover { color: #ff4444; }
-
-.cal-footer {
-padding: 12px 22px;
-border-top: 1px solid #1a3050;
-display: flex;
-justify-content: space-between;
-align-items: center;
-gap: 10px;
-flex-wrap: wrap;
-}
-.cal-footer-note { font-size: 9px; color: #3a5570; font-style: italic; }
-.cal-btn {
-padding: 7px 16px;
-border-radius: 7px;
-font-size: 10px;
-font-weight: 600;
-cursor: pointer;
-border: 1px solid #1a3050;
-transition: all .2s;
-}
-.cal-btn-reset {
-background: #0f1e33;
-color: #4a6a88;
-}
-.cal-btn-reset:hover { border-color: #4a9eff; color: #4a9eff; }
-.cal-btn-apply {
-background: #1558c0;
-color: #fff;
-border-color: #2a70e0;
-}
-.cal-btn-apply:hover { background: #1a6adc; }
 </style>
-
 </head>
-<body>
-
-<div class="header">
-  <div class="header-left">
-    <div class="eyebrow">CRO Forum · March 2026</div>
-    <h1>Geopolitical Risk — What-If Simulator</h1>
-    <div class="sub">Move a theme slider to see cascade effects on the radar and all connected themes &nbsp;·&nbsp; v3.2</div>
+<body><div id="header">
+  <div>
+    <div class="sub1">CRO Forum · March 2026</div>
+    <h1>Geopolitical Risk Radar</h1>
+    <div class="sub2">Distance from centre = time horizon &nbsp;·&nbsp; Bubble size &amp; colour = impact score &nbsp;·&nbsp; Wedge = trigger category</div>
   </div>
-  <button class="reset-btn" onclick="openCal()" style="border-color:#ffc040;color:#ffc040">⚙ Calibrate links</button>
-  <button class="reset-btn" onclick="resetAll()">↺ Reset all to base</button>
-</div>
-
-<!-- ── CALIBRATION MODAL ── -->
-
-<div id="cal-overlay" onclick="if(event.target===this)closeCal()">
-  <div id="cal-modal">
-    <div class="cal-header">
+  <div id="controls">
+    <div class="toggle-group">
+      <button class="toggle-btn active-base" id="btn-base" onclick="setScenario('base')">Base Case</button>
+      <button class="toggle-btn" id="btn-worst" onclick="setScenario('worst')">Worst Case</button>
+    </div>
+    <div class="th-filter-group">
+      <button class="th-filter-btn active" id="thf-all" onclick="setThFilter('all')">All</button>
+      <button class="th-filter-btn" id="thf-6"  onclick="setThFilter(6)">0–6m</button>
+      <button class="th-filter-btn" id="thf-12" onclick="setThFilter(12)">0–12m</button>
+      <button class="th-filter-btn" id="thf-18" onclick="setThFilter(18)">0–18m</button>
+      <button class="th-filter-btn" id="thf-24" onclick="setThFilter(24)">0–24m</button>
+      <button class="th-filter-btn" id="thf-30" onclick="setThFilter(30)">0–30m</button>
+      <button class="th-filter-btn" id="thf-36" onclick="setThFilter(36)">0–36m</button>
+    </div>
+    <button class="ctrl-btn" id="btn-scenario" onclick="openScenarioModal()" style="border-color:#4a9eff;color:#4a9eff">⊕ Scenario &amp; SEI</button>
+    <button class="ctrl-btn" onclick="document.getElementById('file-input').click()">↑ Upload Excel</button>
+    <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+  </div>
+</div><div id="error-panel">
+  <button class="err-close" onclick="closeError()">✕</button>
+  <div class="err-title">⚠ File rejected — errors found</div>
+  <div id="error-list"></div>
+</div><div id="main">
+  <div id="radar-box">
+    <div id="scenario-badge"></div>
+    <div id="radar-scale-wrap">
+      <svg id="radar-svg" viewBox="-90 -90 860 860" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="bottom-legend">
+        <span class="leg-label">Impact:</span>
+        <div id="wedge-legend" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"></div>
+      </div>
+    </div>
+  </div>
+  <div id="panel"></div>
+</div><!-- ── SCENARIO & SEI MODAL ── --><div id="scenario-modal-overlay" onclick="if(event.target===this)closeScenarioModal()">
+  <div id="scenario-modal">
+    <div class="sm-header">
       <div>
-        <h2>Cascade Calibration — Link Weights</h2>
-        <p>Hover a row to see the rationale · scoreEffect = impact transmission · thEffect = time horizon compression · 0 = no link, 1 = full transmission</p>
+        <h2>Scenario Narrative &amp; Scenario Evolution Indicators</h2>
+        <div class="sm-date">Assessment date: March 2026 &nbsp;·&nbsp; Next review: upon SEI trigger or Q2 Working Group meeting</div>
       </div>
-      <button class="cal-close" onclick="closeCal()">✕</button>
+      <button class="sm-close" onclick="closeScenarioModal()">✕</button>
     </div>
-    <div class="cal-body" id="cal-body"></div>
-    <div class="cal-footer">
-      <span class="cal-footer-note">Changes apply immediately to the simulator. Hover any row to read the causal rationale.</span>
-      <div style="display:flex;gap:8px">
-        <button class="cal-btn cal-btn-reset" onclick="resetCalibration()">↺ Reset to defaults</button>
-        <button class="cal-btn cal-btn-apply" onclick="closeCal()">✓ Done</button>
-      </div>
+    <div class="sm-body">
+
+  <!-- BASE NARRATIVE -->
+  <div class="sc-narrative base-card">
+    <div class="sc-badge">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4a9eff"></span>
+      Base Case Scenario
+    </div>
+    <div class="sc-text">
+      The Middle East conflict remains active but contained. Iranian proxies are engaged across multiple theatres; no direct US military confrontation has materialised. Energy routes through the Strait of Hormuz remain operational, with shipping costs elevated but manageable. The conflict contributes to moderate inflationary pressure on energy-sensitive insurance lines but has not triggered systemic disruption.
+      <br><br>
+      In Eastern Europe, the Russia-Ukraine conflict is in a prolonged stalemate. Active negotiation channels exist but no ceasefire is in place. Neither side has the capacity for a decisive offensive. Sovereign credit stress in CEE countries is elevated but contained; European energy dependency has reduced but structural vulnerability remains.
+      <br><br>
+      US foreign policy is marked by selective engagement and mounting fiscal constraints. The new Fed leadership raises questions on monetary policy independence, with bear steepening risk present but not materialised. Tariffs on EU goods stand at approximately 25%, with an uncoordinated EU response. Geopolitical fragmentation is advancing gradually across financial, technology, and trade dimensions — not in a disruptive discontinuity, but through accumulating structural shifts.
     </div>
   </div>
-</div>
 
-<div class="layout">
-
-  <!-- LEFT: SLIDERS -->
-
-  <div class="sliders-panel">
-    <div class="sliders-header">Theme stress level</div>
-    <div id="sliders-content"></div>
+  <!-- WORST NARRATIVE -->
+  <div class="sc-narrative worst-card">
+    <div class="sc-badge">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4040"></span>
+      Worst Case Scenario
+    </div>
+    <div class="sc-text">
+      The Middle East conflict escalates into direct and sustained US military engagement. The scale of this engagement absorbs a significant share of US strategic resources, materially reducing its effective presence and credibility in other theatres. Energy supply through the Strait of Hormuz is severely disrupted for an extended period, triggering a commodity shock that amplifies inflationary pressure across all insurance lines and constrains Fed flexibility.
+      <br><br>
+      The reduction in US strategic bandwidth is read by Russia as a window of opportunity in Eastern Europe. The conflict expands in scale or geography, triggering wider European sovereign stress, accelerated defence spending, and deterioration in CEE credit markets. European governance fragmentation — already present in the base — deepens materially, preventing a coordinated fiscal or trade response.
+      <br><br>
+      In this context, China reassesses the credibility of US deterrence in the Indo-Pacific. The probability of a move on Taiwan — while still not the most likely outcome — shifts meaningfully leftward on the distribution. Simultaneously, the combination of energy shock, monetary policy uncertainty, and geopolitical fragmentation destabilises financial markets: bear steepening accelerates, credit spreads widen sharply, and own funds across the European insurance sector come under acute pressure.
+    </div>
   </div>
 
-  <!-- RIGHT -->
-
-  <div class="right-panel">
-
-```
-<!-- RADAR -->
-<div class="radar-box">
-  <svg id="radar-svg" viewBox="-90 -90 860 860" xmlns="http://www.w3.org/2000/svg"></svg>
-</div>
-
-<!-- NARRATIVE -->
-<div class="narrative-box">
-  <h3>Cascade Narrative</h3>
-  <div class="narrative-content" id="narrative-content">
-    <span class="no-change">No stress applied. Adjust a theme slider to see cascade effects.</span>
+  <!-- SEI TABLE -->
+  <div class="sei-section">
+    <h3>Scenario Evolution Indicators (SEI)</h3>
+    <table class="sei-table">
+      <thead>
+        <tr>
+          <th style="width:22%">Indicator</th>
+          <th style="width:28%">Description</th>
+          <th style="width:16%">Threshold</th>
+          <th style="width:16%">Current value</th>
+          <th style="width:10%">Status</th>
+          <th style="width:8%">Direction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Brent crude price</td>
+          <td>Sustained energy price spike signals Hormuz stress or supply shock materialising</td>
+          <td>&gt; $100/bbl for &gt;10 trading days</td>
+          <td>$82/bbl</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>BTP–Bund spread</td>
+          <td>Italian sovereign spread as proxy for EU governance stress and fiscal fragmentation</td>
+          <td>&gt; 280 bp</td>
+          <td>168 bp</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>US 10Y–2Y yield spread</td>
+          <td>Bear steepening indicator; inversion reversal driven by long-end sell-off signals Fed credibility stress</td>
+          <td>&gt; +80 bp and rising</td>
+          <td>+42 bp</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>EUR/USD 30-day vol</td>
+          <td>FX volatility spike signals loss of confidence in USD or abrupt capital flow reversal</td>
+          <td>&gt; 12%</td>
+          <td>7.4%</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>US-EU effective tariff rate</td>
+          <td>Escalation beyond current level signals trade war deepening; threshold marks shift from actuarial to solvency problem</td>
+          <td>&gt; 35% on EU industrial goods</td>
+          <td>~25%</td>
+          <td><span class="sei-status sei-amber">Watch</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>Suez / Red Sea transit volume</td>
+          <td>Shipping route disruption indicator; sustained reduction signals energy/trade supply chain stress</td>
+          <td>&lt; 60% of pre-conflict weekly baseline for &gt;3 weeks</td>
+          <td>~71% of baseline</td>
+          <td><span class="sei-status sei-amber">Watch</span></td>
+          <td>↓ Worst</td>
+        </tr>
+        <tr>
+          <td>iTraxx Europe Senior Financial</td>
+          <td>Credit spread on European financial institutions; widening signals systemic stress in insurance/banking balance sheets</td>
+          <td>&gt; 130 bp</td>
+          <td>78 bp</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>↑ Worst</td>
+        </tr>
+        <tr>
+          <td>Formal NATO Article 5 consultation</td>
+          <td>Binary event — any formal invocation or consultation signals Eastern Europe escalation crossing into collective defence territory</td>
+          <td>Any formal invocation or consultation initiated</td>
+          <td>Not triggered</td>
+          <td><span class="sei-status sei-green">Clear</span></td>
+          <td>Triggered = Worst</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="sei-note">
+      SEI are monitored at scenario level. A threshold breach does not automatically update the assessment — it triggers a Working Group review to determine whether the scenario and the theme scores/time horizons need revision. Status reflects assessment as of March 2026.
+    </div>
   </div>
+
 </div>
 
-<!-- RIPPLE TABLE -->
-<div class="ripple-box">
-  <div class="ripple-header">
-    <h3>Cascade Impact — All Themes</h3>
-    <span class="ripple-sub">Showing base → stressed score &amp; time horizon</span>
-  </div>
-  <div class="ripple-grid" id="ripple-grid"></div>
+
 </div>
-```
+</div><div id="tooltip"></div><script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+var CX=310, CY=310, R_MIN=52, R_MAX=268, TH_MIN=6, TH_MAX=36;
+var NS="http://www.w3.org/2000/svg";
 
-  </div>
-</div>
-
-<div id="tooltip"></div>
-
-<script>
-// ── CONSTANTS ──────────────────────────────────────────────────────────────────
-var NS = "http://www.w3.org/2000/svg";
-var CX = 310, CY = 310, R_MIN = 52, R_MAX = 268, TH_MIN = 6, TH_MAX = 36;
-var WA = (2 * Math.PI) / 6;
-
-var WEDGES = [
+var WEDGES=[
   {id:"MIL", label:"Military",             color:"#ff5555"},
   {id:"FIN", label:"Financial & Economic", color:"#ff9040"},
   {id:"HYB", label:"Hybrid Ops",           color:"#f0d020"},
@@ -546,762 +405,733 @@ var WEDGES = [
   {id:"POL", label:"Political & Social",   color:"#4aa8e8"},
   {id:"TEC", label:"Tech",                 color:"#b06eff"},
 ];
+var VALID_TRIGGERS=WEDGES.map(function(w){return w.id;});
+var INDICATORS=["Inflation","GDP Growth","Int Rates","Bund Credit Spread","BTP Credit Spread","OAT Credit Spread","Commodity & Energy","Cyber / Silent Cyber","Op.Disruption (BI)"];
 
-var SCORE_COLORS = {
-  1:{fill:"#163a6e",border:"#4a9eff"},
-  2:{fill:"#0d5c5c",border:"#2de8c8"},
-  3:{fill:"#7a5200",border:"#ffc040"},
-  4:{fill:"#7a2800",border:"#ff7830"},
-  5:{fill:"#6e0a0a",border:"#ff4040"},
+// ── 5 DISCRETE SCORE COLORS ───────────────────────────────────────────────────
+// Clearly distinct: steel-blue → teal → amber → orange → crimson
+var SCORE_COLORS={
+  1:{fill:"#163a6e", border:"#4a9eff", label:"Minimal"},
+  2:{fill:"#0d5c5c", border:"#2de8c8", label:"Low"},
+  3:{fill:"#7a5200", border:"#ffc040", label:"Moderate"},
+  4:{fill:"#7a2800", border:"#ff7830", label:"High"},
+  5:{fill:"#6e0a0a", border:"#ff4040", label:"Severe"},
 };
 
-// ── THEMES (base scores extracted from radar tool) ────────────────────────────
-var BASE_THEMES = [
-  {id:"T01", wedge:"ENE", short:"Iran energy shock",        name:"Iran-triggered energy shock",
-   base:{score:1.9, th:10}, worst:{score:3.4, th:4}},
-  {id:"T02", wedge:"MIL", short:"E.Europe escalation",      name:"Large-scale military escalation in Eastern Europe",
-   base:{score:2.0, th:20}, worst:{score:3.3, th:7}},
-  {id:"T03", wedge:"MIL", short:"Taiwan Strait",            name:"Military escalation in the Taiwan Strait",
-   base:{score:3.2, th:36}, worst:{score:4.0, th:15}},
-  {id:"T04", wedge:"FIN", short:"Fed & policy shift",       name:"Fed independence and US monetary policy shift",
-   base:{score:3.2, th:9},  worst:{score:4.0, th:5}},
-  {id:"T05", wedge:"FIN", short:"US-EU tariffs",            name:"US-EU trade war escalation",
-   base:{score:3.2, th:12}, worst:{score:4.6, th:7}},
-  {id:"T06", wedge:"FIN", short:"USD erosion",              name:"USD reserve status erosion",
-   base:{score:2.3, th:24}, worst:{score:3.2, th:12}},
-  {id:"T07", wedge:"HYB", short:"Systemic cyber",           name:"Systemic cyber attack on financial infrastructure",
-   base:{score:3.3, th:12}, worst:{score:3.3, th:6}},
-  {id:"T08", wedge:"HYB", short:"EU cloud risk",            name:"EU dependency on US cloud and IT providers",
-   base:{score:2.3, th:24}, worst:{score:2.3, th:12}},
-  {id:"T09", wedge:"ENE", short:"EU energy",                name:"European energy supply disruption",
-   base:{score:2.9, th:18}, worst:{score:3.9, th:9}},
-  {id:"T10", wedge:"ENE", short:"China REE",                name:"China supply chain and rare earth disruption",
-   base:{score:2.9, th:12}, worst:{score:3.1, th:7}},
-  {id:"T11", wedge:"POL", short:"EU governance",            name:"European governance fragmentation",
-   base:{score:3.0, th:18}, worst:{score:3.9, th:9}},
-  {id:"T12", wedge:"POL", short:"EU social unrest",         name:"Social unrest and political polarisation in Europe",
-   base:{score:2.3, th:18}, worst:{score:3.2, th:10}},
-  {id:"T13", wedge:"TEC", short:"Chip export controls",     name:"Semiconductor export controls escalation",
-   base:{score:2.0, th:12}, worst:{score:3.0, th:6}},
-  {id:"T14", wedge:"ENE", short:"Red Sea shipping",         name:"Red Sea / Suez shipping disruption",
-   base:{score:2.3, th:9},  worst:{score:3.1, th:5}},
-  {id:"T15", wedge:"FIN", short:"ME sovereign risk",        name:"Middle East sovereign and political risk contagion",
-   base:{score:2.1, th:18}, worst:{score:3.0, th:9}},
-  {id:"T16", wedge:"TEC", short:"AI reg. fragmentation",    name:"AI governance and regulatory fragmentation",
-   base:{score:1.4, th:24}, worst:{score:2.0, th:12}},
-  {id:"T18", wedge:"HYB", short:"Undersea cable",           name:"Undersea cable sabotage",
-   base:{score:1.9, th:9},  worst:{score:2.6, th:5}},
-  {id:"T19", wedge:"FIN", short:"Payment fragmentation",    name:"Digital payment and financial messaging fragmentation",
-   base:{score:1.4, th:24}, worst:{score:2.4, th:12}},
-  {id:"T20", wedge:"TEC", short:"AI weaponization",         name:"AI weaponization and autonomous systems",
-   base:{score:1.9, th:12}, worst:{score:2.6, th:6}},
-  {id:"T21", wedge:"MIL", short:"Nuclear incident",         name:"Nuclear / radiological incident",
-   base:{score:2.2, th:24}, worst:{score:4.0, th:9}},
-];
-
-// ── PROPAGATION MATRIX ────────────────────────────────────────────────────────
-// Format: {from: "TXX", to: "TYY", scoreEffect: 0-1.0, thEffect: 0-1.0}
-// scoreEffect = fraction of slider delta transmitted to target score
-// thEffect    = fraction of slider delta transmitted to target TH compression
-// Narrative describes WHY this link exists
-
-var PROPAGATION = [
-  // T01 Iran energy shock → cascades
-  {from:"T01", to:"T09", scoreEffect:0.7, thEffect:0.6,
-   narrative:"Hormuz disruption feeds directly into European energy supply stress"},
-  {from:"T01", to:"T14", scoreEffect:0.8, thEffect:0.7,
-   narrative:"Red Sea/Suez rerouting intensifies when Persian Gulf also disrupted"},
-  {from:"T01", to:"T15", scoreEffect:0.6, thEffect:0.4,
-   narrative:"Oil shock erodes fiscal buffers of oil-importing ME sovereigns"},
-  {from:"T01", to:"T04", scoreEffect:0.5, thEffect:0.5,
-   narrative:"Energy shock forces Fed into impossible stagflation dilemma, compressing policy timeline"},
-  {from:"T01", to:"T02", scoreEffect:0.3, thEffect:0.4,
-   narrative:"US absorbed in ME reduces bandwidth for Eastern Europe deterrence"},
-
-  // T02 E.Europe escalation → cascades
-  {from:"T02", to:"T21", scoreEffect:0.4, thEffect:0.7,
-   narrative:"Expanded conflict increases nuclear rhetoric and Zaporizhzhia risk imminence"},
-  {from:"T02", to:"T09", scoreEffect:0.6, thEffect:0.5,
-   narrative:"Eastern Europe escalation threatens residual energy corridors and transit routes"},
-  {from:"T02", to:"T11", scoreEffect:0.5, thEffect:0.4,
-   narrative:"Defence spending pressure and governance stress deepen EU political fragmentation"},
-  {from:"T02", to:"T12", scoreEffect:0.4, thEffect:0.3,
-   narrative:"War proximity and refugee flows amplify social unrest in Eastern EU states"},
-
-  // T03 Taiwan → cascades
-  {from:"T03", to:"T10", scoreEffect:0.8, thEffect:0.7,
-   narrative:"Taiwan conflict triggers immediate Chinese embargo on REE and critical materials"},
-  {from:"T03", to:"T13", scoreEffect:0.9, thEffect:0.8,
-   narrative:"TSMC disruption is the central semiconductor shock — all chip supply affected"},
-  {from:"T03", to:"T06", scoreEffect:0.5, thEffect:0.4,
-   narrative:"Taiwan crisis triggers USD safe-haven rally then structural reserve diversification"},
-  {from:"T03", to:"T07", scoreEffect:0.4, thEffect:0.5,
-   narrative:"Chinese state cyber operations intensify in tandem with military escalation"},
-
-  // T04 Fed → cascades
-  {from:"T04", to:"T06", scoreEffect:0.7, thEffect:0.5,
-   narrative:"Fed credibility loss accelerates central bank USD reserve diversification globally"},
-  {from:"T04", to:"T11", scoreEffect:0.4, thEffect:0.3,
-   narrative:"Bear steepening hits EU sovereign spreads, amplifying governance fragmentation stress"},
-  {from:"T04", to:"T05", scoreEffect:0.3, thEffect:0.2,
-   narrative:"USD weakness reduces US trade leverage but also inflames domestic protectionist pressure"},
-
-  // T05 US-EU tariffs → cascades
-  {from:"T05", to:"T13", scoreEffect:0.5, thEffect:0.4,
-   narrative:"Trade war extends to technology controls and semiconductor export restrictions"},
-  {from:"T05", to:"T19", scoreEffect:0.6, thEffect:0.4,
-   narrative:"Sanctions escalation accelerates SWIFT alternatives and payment system fragmentation"},
-  {from:"T05", to:"T10", scoreEffect:0.4, thEffect:0.3,
-   narrative:"US-EU trade war pushes EU to seek Chinese supply alternatives, increasing REE dependency"},
-  {from:"T05", to:"T11", scoreEffect:0.5, thEffect:0.3,
-   narrative:"Tariff pressure without EU coordination exposes governance fragmentation structurally"},
-
-  // T07 Systemic cyber → cascades
-  {from:"T07", to:"T08", scoreEffect:0.3, thEffect:0.6,
-   narrative:"Major cyber incident accelerates urgent review of EU cloud dependency on US providers"},
-  {from:"T07", to:"T19", scoreEffect:0.7, thEffect:0.5,
-   narrative:"Financial infrastructure attack triggers payment system fragmentation and SWIFT alternatives"},
-  {from:"T07", to:"T18", scoreEffect:0.3, thEffect:0.4,
-   narrative:"Combined cyber and physical attack vector on digital-physical infrastructure"},
-
-  // T09 EU energy → cascades
-  {from:"T09", to:"T11", scoreEffect:0.4, thEffect:0.3,
-   narrative:"Energy price spike amplifies fiscal stress and governance divergence within EU"},
-  {from:"T09", to:"T12", scoreEffect:0.5, thEffect:0.3,
-   narrative:"Energy costs and industrial contraction fuel social unrest across EU member states"},
-
-  // T10 China REE → cascades
-  {from:"T10", to:"T13", scoreEffect:0.6, thEffect:0.4,
-   narrative:"REE embargo compounds semiconductor shortage — both inputs to same industrial supply chain"},
-
-  // T11 EU governance → cascades
-  {from:"T11", to:"T12", scoreEffect:0.7, thEffect:0.4,
-   narrative:"Governance paralysis removes social safety net buffers, amplifying unrest dynamics"},
-  {from:"T11", to:"T05", scoreEffect:0.3, thEffect:0.2,
-   narrative:"EU failure to coordinate trade response invites further US tariff escalation"},
-
-  // T14 Red Sea → cascades
-  {from:"T14", to:"T09", scoreEffect:0.5, thEffect:0.4,
-   narrative:"Suez closure forces energy rerouting and cost spikes into European supply chains"},
-  {from:"T14", to:"T10", scoreEffect:0.4, thEffect:0.3,
-   narrative:"Shipping disruption affects Chinese critical material exports to Europe"},
-
-  // T18 Undersea cable → cascades
-  {from:"T18", to:"T07", scoreEffect:0.4, thEffect:0.5,
-   narrative:"Physical infrastructure attack creates cyber vulnerability windows"},
-  {from:"T18", to:"T08", scoreEffect:0.3, thEffect:0.4,
-   narrative:"Cable disruption forces emergency rerouting through US-controlled cloud infrastructure"},
-
-  // T21 Nuclear → cascades (severe, few)
-  {from:"T21", to:"T02", scoreEffect:0.6, thEffect:0.8,
-   narrative:"Nuclear incident forces immediate Article 5 review; compresses Eastern Europe timeline dramatically"},
-  {from:"T21", to:"T11", scoreEffect:0.5, thEffect:0.5,
-   narrative:"Nuclear event shatters EU political consensus and governance capacity"},
-];
-
-// ── STATE ─────────────────────────────────────────────────────────────────────
-// sliderValues[id] = 0.0 (base) to 1.0 (full worst)
-var sliderValues = {};
-BASE_THEMES.forEach(function(t){ sliderValues[t.id] = 0.0; });
-
-// ── COMPUTE EFFECTIVE SCORES ──────────────────────────────────────────────────
-function computeEffective() {
-  var result = {};
-  BASE_THEMES.forEach(function(t) {
-    result[t.id] = {
-      score: t.base.score,
-      th: t.base.th,
-      directStress: sliderValues[t.id],
-      cascadeScore: 0,
-      cascadeTH: 0,
-      triggers: []
-    };
-  });
-
-  // Apply direct slider
-  BASE_THEMES.forEach(function(t) {
-    var s = sliderValues[t.id];
-    if (s > 0) {
-      var ds = (t.worst.score - t.base.score) * s;
-      var dth = (t.base.th - t.worst.th) * s; // TH compression
-      result[t.id].score = t.base.score + ds;
-      result[t.id].th = Math.max(t.worst.th, t.base.th - dth);
-    }
-  });
-
-  // Apply cascades
-  PROPAGATION.forEach(function(p) {
-    var srcStress = sliderValues[p.from];
-    if (srcStress <= 0) return;
-    var src = BASE_THEMES.filter(function(t){ return t.id === p.from; })[0];
-    var tgt = result[p.to];
-    if (!tgt) return;
-
-    var scoreBoost = (src.worst.score - src.base.score) * srcStress * p.scoreEffect;
-    var thComp = (src.base.th - src.worst.th) * srcStress * p.thEffect;
-
-    tgt.cascadeScore = (tgt.cascadeScore || 0) + scoreBoost;
-    tgt.cascadeTH = (tgt.cascadeTH || 0) + thComp;
-    tgt.triggers.push({from: p.from, narrative: p.narrative, effect: scoreBoost});
-  });
-
-  // Finalize: add cascade on top, cap at worst
-  BASE_THEMES.forEach(function(t) {
-    var r = result[t.id];
-    var directApplied = sliderValues[t.id] > 0;
-    var newScore = r.score + (r.cascadeScore || 0);
-    var newTH = r.th - (r.cascadeTH || 0);
-    r.score = Math.min(t.worst.score, Math.round(newScore * 10) / 10);
-    r.th = Math.max(t.worst.th, Math.round(newTH));
-    r.score = Math.max(1, Math.min(5, r.score));
-  });
-
-  return result;
+function scoreToFill(s){return SCORE_COLORS[Math.min(5,Math.max(1,Math.floor(s)))].fill;}
+function scoreToBorder(s){return SCORE_COLORS[Math.min(5,Math.max(1,Math.floor(s)))].border;}
+function scoreColorPanel(s){
+  if(s>=4.5) return "#ff4040";
+  if(s>=3.5) return "#ff7830";
+  if(s>=2.5) return "#ffc040";
+  if(s>=1.5) return "#2de8c8";
+  return "#4a9eff";
 }
+
+// ── BUBBLE SIZE: linear proportional 9px → 21px ───────────────────────────────
+var BR_MIN=9, BR_MAX=21;
+function scoreToBR(s){return BR_MIN+((Math.min(5,Math.max(1,s))-1)/4)*(BR_MAX-BR_MIN);}
 
 // ── GEOMETRY ──────────────────────────────────────────────────────────────────
-function thToR(th) {
-  var c = Math.min(Math.max(th, TH_MIN), TH_MAX);
-  return R_MIN + ((c - TH_MIN) / (TH_MAX - TH_MIN)) * (R_MAX - R_MIN);
-}
-function scoreToBR(s) { return 9 + ((Math.min(5, Math.max(1, s)) - 1) / 4) * 12; }
-function scoreToFill(s) { return SCORE_COLORS[Math.min(5, Math.max(1, Math.floor(s)))].fill; }
-function scoreToBorder(s) { return SCORE_COLORS[Math.min(5, Math.max(1, Math.floor(s)))].border; }
-function wedgeColor(id) {
-  for (var i = 0; i < WEDGES.length; i++) if (WEDGES[i].id === id) return WEDGES[i].color;
-  return "#888";
-}
-function wedgeIndex(id) {
-  for (var i = 0; i < WEDGES.length; i++) if (WEDGES[i].id === id) return i;
-  return 0;
+var N=WEDGES.length, WA=(2*Math.PI)/N;
+
+// effective max TH based on current filter
+function effectiveMaxTH(){
+  return thFilter==='all' ? 36 : parseInt(thFilter);
 }
 
-function computePositions(effective) {
-  var byWedge = {};
-  BASE_THEMES.forEach(function(t) {
-    if (!byWedge[t.wedge]) byWedge[t.wedge] = [];
+function thToR(th){
+  var maxTH = effectiveMaxTH();
+  var c=Math.min(Math.max(th,TH_MIN), maxTH);
+  return R_MIN+((c-TH_MIN)/(maxTH-TH_MIN))*(R_MAX-R_MIN);
+}
+
+function activeThemes(){
+  return THEMES.filter(function(t){
+    if(t.upside) return false;
+    if(thFilter==='all') return true;
+    return t[scenario].th <= parseInt(thFilter);
+  });
+}
+function wedgeColor(id){for(var i=0;i<WEDGES.length;i++)if(WEDGES[i].id===id)return WEDGES[i].color;return "#888";}
+
+// ── SCORE COMPUTED AS MEAN OF IMPACT INDICATORS ───────────────────────────────
+function meanScore(scores){
+  var s=scores.reduce(function(a,b){return a+b;},0);
+  return Math.round((s/scores.length)*10)/10;
+}
+
+var DEFAULT_THEMES=[
+  // scores: [Inflation, GDP, IntRates, Bund CS, BTP CS, OAT CS, Commodity, Cyber, BI]
+  {id:"T02",wedge:"MIL",upside:false,
+   name:"Large-scale military escalation in Eastern Europe",short:"E.Europe escalation",
+   base: {scores:[2,2,1,2,3,2,2,1,1],th:20,thLabel:"18-24m"},
+   worst:{scores:[3,4,3,4,4,3,3,2,4],th:7, thLabel:"6-9m"},
+   baseNote:"Stalemate holds. Contained sovereign credit stress in CEE, energy costs, industrial supply chain disruption.",
+   worstNote:"US distracted by Iran. Russia sees window. Wider geography affected, up to Article 5 activation. Sovereign spreads and defence spending shift materially."},
+  {id:"T03",wedge:"MIL",upside:false,
+   name:"Military escalation in the Taiwan Strait",short:"Taiwan Strait",
+   base: {scores:[3,4,3,4,3,3,3,2,4],th:36,thLabel:"36m+"},
+   worst:{scores:[4,5,3,5,4,4,4,2,5],th:15,thLabel:"12-18m"},
+   baseNote:"US deterrence intact. Score already high — consequences are severe regardless of timing.",
+   worstNote:"Score unchanged — catastrophic impact already the base assessment. US distraction from Iran compresses timeline."},
+  {id:"T21",wedge:"MIL",upside:false,
+   name:"Nuclear / radiological incident",short:"Nuclear incident",
+   base: {scores:[2,2,1,2,3,2,2,1,3],th:24,thLabel:"24m"},
+   worst:{scores:[4,5,3,5,5,4,4,1,5],th:9, thLabel:"9m"},
+   baseNote:"Zaporizhzhia operating under tension. Russian nuclear rhetoric present but not escalated. Probability low but non-negligible.",
+   worstNote:"Tactical nuclear use or major Zaporizhzhia incident. Property destruction and liability become indefinite. Reinsurance market for war risk collapses."},
+  {id:"T04",wedge:"FIN",upside:false,
+   name:"Fed independence and US monetary policy shift",short:"Fed & policy shift",
+   base: {scores:[4,3,5,4,3,3,2,1,2],th:9, thLabel:"9m"},
+   worst:{scores:[5,4,5,5,4,4,4,1,3],th:5, thLabel:"3-6m"},
+   baseNote:"New Fed Chair, bear steepening risk live. Duration-matched portfolios under pressure. Own funds volatility elevated.",
+   worstNote:"Fed credibility loss triggers discontinuous bear steepening. USD reserve status questioned. All rate-sensitive lines hit simultaneously."},
+  {id:"T05",wedge:"FIN",upside:false,
+   name:"US-EU trade war escalation",short:"US-EU tariffs",
+   base: {scores:[3,4,3,3,4,3,3,1,3],th:12,thLabel:"12m"},
+   worst:{scores:[5,5,4,5,5,4,4,1,4],th:7, thLabel:"6-9m"},
+   baseNote:"Tariffs at 25%, EU non-coordinated. Claims inflation on imported goods, industrial supply chain.",
+   worstNote:"Tariffs >35%, EU fails to coordinate. Shifts from actuarial to solvency problem — sovereign bond market stress."},
+  {id:"T06",wedge:"FIN",upside:false,
+   name:"USD reserve status erosion",short:"USD erosion",
+   base: {scores:[2,2,4,3,2,2,2,1,2],th:24,thLabel:"24m"},
+   worst:{scores:[3,3,5,4,3,3,3,1,2],th:12,thLabel:"12m"},
+   baseNote:"Gradual diversification away from USD by central banks. Slow-moving structural shift.",
+   worstNote:"Discontinuous confidence loss triggered by debt ceiling crisis or Fed shock. Capital flows reverse rapidly."},
+  {id:"T15",wedge:"FIN",upside:false,
+   name:"Middle East sovereign and political risk contagion",short:"ME sovereign risk",
+   base: {scores:[2,2,3,3,3,2,2,1,1],th:18,thLabel:"18m"},
+   worst:{scores:[3,3,4,4,4,3,3,1,2],th:9, thLabel:"9m"},
+   baseNote:"Oil-linked sovereign creditworthiness under moderate pressure. Gulf states fiscal buffers intact. EM sovereign spreads elevated but contained.",
+   worstNote:"Sustained energy price shock erodes fiscal buffers of oil-importing EM sovereigns. Credit spread widening on EM bonds impacts portfolios. Petrostate contagion into European insurer exposures."},
+  {id:"T19",wedge:"FIN",upside:false,
+   name:"Digital payment and financial messaging fragmentation",short:"Payment fragmentation",
+   base: {scores:[1,2,1,2,1,1,1,1,2],th:24,thLabel:"24m"},
+   worst:{scores:[2,3,2,4,2,2,1,2,4],th:12,thLabel:"12m"},
+   baseNote:"SWIFT alternatives (SPFS, CIPS) operational but not mainstream. Fragmentation gradual.",
+   worstNote:"New round of massive sanctions accelerates alternative systems. Trade credit and reinsurance collection disrupted across EM corridors."},
+  {id:"T07",wedge:"HYB",upside:false,
+   name:"Systemic cyber attack on financial infrastructure",short:"Systemic cyber",
+   base: {scores:[3,3,3,4,3,3,2,5,5],th:12,thLabel:"12m"},
+   worst:{scores:[3,3,3,4,3,3,2,5,5],th:6, thLabel:"6m"},
+   baseNote:"State-sponsored cyber increasing in frequency. Silent cyber accumulation elevated.",
+   worstNote:"Coordinated multi-institution attack. Systemic silent cyber losses materialise; correlated BI claims across sectors."},
+  {id:"T08",wedge:"HYB",upside:false,
+   name:"EU dependency on US cloud and IT providers",short:"EU cloud risk",
+   base: {scores:[2,2,2,2,1,1,1,4,4],th:24,thLabel:"18-24m"},
+   worst:{scores:[2,2,2,2,1,1,1,4,4],th:12,thLabel:"12m"},
+   baseNote:"Geopolitical tensions raise data sovereignty questions. DORA pressure increasing but transition timelines long.",
+   worstNote:"US-EU breakdown triggers abrupt restrictions on cross-border data flows. No viable alternatives in place."},
+  {id:"T18",wedge:"HYB",upside:false,
+   name:"Undersea cable sabotage",short:"Undersea cable",
+   base: {scores:[1,2,1,2,1,1,1,3,3],th:9, thLabel:"9m"},
+   worst:{scores:[2,3,1,3,2,2,2,4,5],th:5, thLabel:"3-6m"},
+   baseNote:"Incidents documented in Baltic Sea and Mediterranean. Marine property and BI from communication disruption active.",
+   worstNote:"Coordinated multi-cable campaign in escalation context. BI catastrophic for financial services and digital-dependent sectors."},
+  {id:"T01",wedge:"ENE",upside:false,
+   name:"Iran-triggered energy shock",short:"Iran energy shock",
+   base: {scores:[3,2,1,1,2,1,3,1,2],th:10,thLabel:"9-12m"},
+   worst:{scores:[5,3,3,4,4,3,5,2,4],th:4, thLabel:"3-6m"},
+   baseNote:"Conflict contained, Hormuz operational. Marine and energy lines moderately affected.",
+   worstNote:"Direct US-Iran military engagement triggers Hormuz closure. Energy shock systemic — inflation hits all lines simultaneously."},
+  {id:"T09",wedge:"ENE",upside:false,
+   name:"European energy supply disruption",short:"EU energy",
+   base: {scores:[3,3,2,2,3,2,4,1,3],th:18,thLabel:"18m"},
+   worst:{scores:[5,4,3,3,4,3,5,1,4],th:9, thLabel:"9m"},
+   baseNote:"Structural vulnerability remains. Winter demand spikes manageable. Claims inflation from energy costs moderate.",
+   worstNote:"Renewed disruption from Eastern Europe escalation or infrastructure sabotage. Energy prices spike; industrial lines hit."},
+  {id:"T10",wedge:"ENE",upside:false,
+   name:"China supply chain and rare earth disruption",short:"China REE",
+   base: {scores:[3,3,3,3,2,2,3,2,4],th:12,thLabel:"12m"},
+   worst:{scores:[3,3,3,3,3,2,4,3,5],th:7, thLabel:"6-9m"},
+   baseNote:"China restricting critical minerals as leverage. Near-term impact limited to specific industrial sectors.",
+   worstNote:"Significant escalation across REE, semiconductors, critical components. Industrial BI and trade credit become correlated."},
+  {id:"T14",wedge:"ENE",upside:false,
+   name:"Red Sea / Suez shipping disruption",short:"Red Sea shipping",
+   base: {scores:[3,2,1,2,2,1,3,1,4],th:9, thLabel:"9m"},
+   worst:{scores:[4,3,2,3,3,2,4,2,5],th:5, thLabel:"3-6m"},
+   baseNote:"Houthi attacks ongoing. Shipping rerouted around Cape of Good Hope. Marine insurance losses active.",
+   worstNote:"Sustained closure of Suez-Red Sea corridor. Marine and cargo losses spike. Supply chain BI across European manufacturing systemic."},
+  {id:"T11",wedge:"POL",upside:false,
+   name:"European governance fragmentation",short:"EU governance",
+   base: {scores:[2,3,3,4,5,4,2,1,2],th:18,thLabel:"18m"},
+   worst:{scores:[2,4,5,5,5,5,2,1,3],th:9, thLabel:"9m"},
+   baseNote:"Far-right gains in key member states but collective EU decision-making functional. Spreads elevated but stable.",
+   worstNote:"Political crisis blocks collective EU response on defence or fiscal. Sovereign spreads and rates surge sharply."},
+  {id:"T12",wedge:"POL",upside:false,
+   name:"Social unrest and political polarisation in Europe",short:"EU social unrest",
+   base: {scores:[2,3,2,2,3,2,2,1,2],th:18,thLabel:"18m"},
+   worst:{scores:[4,4,2,3,4,3,3,1,3],th:10,thLabel:"9-12m"},
+   baseNote:"Fiscal consolidation and migration tensions driving localised unrest. Limited direct insurance impact.",
+   worstNote:"Large-scale unrest in multiple countries — property damage, BI losses, operational disruption for retail distribution."},
+  {id:"T13",wedge:"TEC",upside:false,
+   name:"Semiconductor export controls escalation",short:"Chip export controls",
+   base: {scores:[2,2,2,2,1,1,3,1,3],th:12,thLabel:"12m"},
+   worst:{scores:[3,3,3,3,2,2,4,2,5],th:6, thLabel:"6m"},
+   baseNote:"US and allied export controls on advanced semiconductors already active (ASML, NVIDIA). Impact contained to specific sectors.",
+   worstNote:"Bilateral escalation — US tightens controls further, China retaliates. BI on European manufacturing becomes systemic."},
+  {id:"T16",wedge:"TEC",upside:false,
+   name:"AI governance and regulatory fragmentation",short:"AI reg. fragmentation",
+   base: {scores:[1,1,1,1,1,1,1,2,3],th:24,thLabel:"24m"},
+   worst:{scores:[2,2,1,2,1,1,1,2,4],th:12,thLabel:"12m"},
+   baseNote:"EU AI Act diverging from US deregulatory stance and China state-directed model. Compliance burden growing but manageable.",
+   worstNote:"Regulatory incompatibility forces operational re-architecture for insurers with EU-US-Asia footprint. BI from systems disruption material."},
+  {id:"T20",wedge:"TEC",upside:false,
+   name:"AI weaponization and autonomous systems",short:"AI weaponization",
+   base: {scores:[1,2,1,2,1,1,1,3,2],th:12,thLabel:"12m"},
+   worst:{scores:[2,3,1,3,2,2,2,4,4],th:6, thLabel:"6m"},
+   baseNote:"Autonomous drones deployed in Ukraine and Middle East. AI disinformation active in elections. D&O, war risk and cyber exposure.",
+   worstNote:"State-coordinated AI market manipulation. Autonomous weapons cause war risk exclusion ambiguity. Disinformation destabilises financial markets."},
+];
+
+// inject computed scores
+DEFAULT_THEMES.forEach(function(t){
+  t.base.score  = meanScore(t.base.scores);
+  t.worst.score = meanScore(t.worst.scores);
+});
+
+// ── STATE ──────────────────────────────────────────────────────────────────────
+var scenario='base', selectedId=null, thFilter='all';
+var THEMES=DEFAULT_THEMES.slice();
+
+// ── POSITIONS ──────────────────────────────────────────────────────────────────
+function computePositions(){
+  var byWedge={};
+  activeThemes().forEach(function(t){
+    if(!byWedge[t.wedge])byWedge[t.wedge]=[];
     byWedge[t.wedge].push(t);
   });
-  var pos = {};
-  Object.keys(byWedge).forEach(function(wid) {
-    var evs = byWedge[wid];
-    var wi = wedgeIndex(wid);
-    var midA = wi * WA - Math.PI / 2 + WA / 2;
-    var count = evs.length;
-    evs.forEach(function(t, idx) {
-      var spread = count > 1 ? 0.56 : 0;
-      var jitter = count > 1 ? (-spread / 2 + (idx / (count - 1)) * spread) * WA : 0;
-      var a = midA + jitter;
-      var eff = effective[t.id];
-      var r = thToR(eff.th);
-      pos[t.id] = {x: CX + r * Math.cos(a), y: CY + r * Math.sin(a), score: eff.score, angle: a};
+  var pos={};
+  Object.keys(byWedge).forEach(function(wid){
+    var evs=byWedge[wid];
+    var wi=0;for(var i=0;i<WEDGES.length;i++)if(WEDGES[i].id===wid){wi=i;break;}
+    var midA=wi*WA-Math.PI/2+WA/2;
+    var count=evs.length;
+    evs.forEach(function(t,idx){
+      var spread=count>1?0.56:0;
+      var jitter=count>1?(-spread/2+(idx/(count-1))*spread)*WA:0;
+      var a=midA+jitter;
+      var d=t[scenario];
+      var r=thToR(d.th);
+      pos[t.id]={x:CX+r*Math.cos(a),y:CY+r*Math.sin(a),score:d.score,angle:a};
     });
   });
   return pos;
 }
 
-// ── DRAW RADAR ────────────────────────────────────────────────────────────────
-function el(tag, attrs) {
-  var e = document.createElementNS(NS, tag);
-  for (var k in attrs) e.setAttribute(k, attrs[k]);
+// ── WEDGE AVERAGE ──────────────────────────────────────────────────────────────
+function wedgeAvg(wid){
+  var ts=activeThemes().filter(function(t){return t.wedge===wid;});
+  if(!ts.length)return null;
+  return (ts.reduce(function(a,t){return a+t[scenario].score;},0)/ts.length).toFixed(1);
+}
+
+// ── SVG HELPERS ────────────────────────────────────────────────────────────────
+function el(tag,attrs){
+  var e=document.createElementNS(NS,tag);
+  for(var k in attrs)e.setAttribute(k,attrs[k]);
   return e;
 }
-function txt(content, attrs) { var e = el("text", attrs); e.textContent = content; return e; }
+function txt(content,attrs){var e=el("text",attrs);e.textContent=content;return e;}
+function tspan(content,attrs){var e=document.createElementNS(NS,"tspan");for(var k in attrs)e.setAttribute(k,attrs[k]);e.textContent=content;return e;}
 
-function drawRadar() {
-  var effective = computeEffective();
-  var svg = document.getElementById("radar-svg");
-  svg.innerHTML = "";
+// ── DRAW ───────────────────────────────────────────────────────────────────────
+function drawRadar(){
+  var svg=document.getElementById("radar-svg");
+  svg.innerHTML="";
 
-  // defs
-  var defs = el("defs", {});
-  var fg = el("filter", {id:"glow",x:"-50%",y:"-50%",width:"200%",height:"200%"});
-  var gb = el("feGaussianBlur", {stdDeviation:"4",result:"b"});
-  var gm = el("feMerge", {});
-  gm.appendChild(el("feMergeNode",{in:"b"}));
-  gm.appendChild(el("feMergeNode",{in:"SourceGraphic"}));
-  fg.appendChild(gb); fg.appendChild(gm); defs.appendChild(fg);
-
-  WEDGES.forEach(function(w) {
-    var rg = el("radialGradient", {id:"rg-"+w.id,cx:"50%",cy:"50%",r:"50%"});
+  // ── defs ──
+  var defs=el("defs",{});
+  // glow filter
+  var fg=el("filter",{id:"glow",x:"-50%",y:"-50%",width:"200%",height:"200%"});
+  var gb=el("feGaussianBlur",{stdDeviation:"4",result:"b"});
+  var gm=el("feMerge",{});
+  gm.appendChild(el("feMergeNode",{in:"b"}));gm.appendChild(el("feMergeNode",{in:"SourceGraphic"}));
+  fg.appendChild(gb);fg.appendChild(gm);defs.appendChild(fg);
+  // halo
+  var fh=el("filter",{id:"halo",x:"-80%",y:"-80%",width:"260%",height:"260%"});
+  var hb=el("feGaussianBlur",{stdDeviation:"9",result:"b"});
+  var hm=el("feMerge",{});
+  hm.appendChild(el("feMergeNode",{in:"b"}));hm.appendChild(el("feMergeNode",{in:"SourceGraphic"}));
+  fh.appendChild(hb);fh.appendChild(hm);defs.appendChild(fh);
+  // wedge gradients — brighter fill
+  WEDGES.forEach(function(w){
+    var rg=el("radialGradient",{id:"rg-"+w.id,cx:"50%",cy:"50%",r:"50%"});
     rg.appendChild(el("stop",{offset:"0%","stop-color":w.color,"stop-opacity":"0.0"}));
     rg.appendChild(el("stop",{offset:"100%","stop-color":w.color,"stop-opacity":"0.12"}));
     defs.appendChild(rg);
   });
   svg.appendChild(defs);
 
-  // wedge fills
-  WEDGES.forEach(function(w, i) {
-    var a1 = i * WA - Math.PI / 2, a2 = a1 + WA;
-    var x1 = CX + R_MAX * Math.cos(a1), y1 = CY + R_MAX * Math.sin(a1);
-    var x2 = CX + R_MAX * Math.cos(a2), y2 = CY + R_MAX * Math.sin(a2);
-    var d = "M "+CX+" "+CY+" L "+x1+" "+y1+" A "+R_MAX+" "+R_MAX+" 0 0 1 "+x2+" "+y2+" Z";
+  // ── wedge fills ──
+  WEDGES.forEach(function(w,i){
+    var a1=i*WA-Math.PI/2, a2=a1+WA;
+    var x1=CX+R_MAX*Math.cos(a1),y1=CY+R_MAX*Math.sin(a1);
+    var x2=CX+R_MAX*Math.cos(a2),y2=CY+R_MAX*Math.sin(a2);
+    var d="M "+CX+" "+CY+" L "+x1+" "+y1+" A "+R_MAX+" "+R_MAX+" 0 0 1 "+x2+" "+y2+" Z";
     svg.appendChild(el("path",{d:d,fill:"url(#rg-"+w.id+")",stroke:w.color,"stroke-width":"0.5","stroke-opacity":"0.5"}));
   });
 
-  // rings
-  [6,12,18,24,30,36].forEach(function(th, i) {
-    var r = thToR(th);
-    var solid = (i % 2 === 1);
-    svg.appendChild(el("circle",{cx:CX,cy:CY,r:r,fill:"none",
-      stroke: solid ? "#2a5080" : "#1e3a5f",
-      "stroke-width": solid ? "1.2" : "0.7",
-      "stroke-dasharray": solid ? "none" : "4,5"}));
-    svg.appendChild(txt(th+"m",{x:CX+5,y:CY-r+13,
-      "font-size":"9","font-family":"monospace",fill:"#3a6898","font-weight":solid?"700":"400"}));
-    if (i % 2 === 0) {
-      var rOuter = r, rInner = i === 0 ? R_MIN : thToR([6,12,18,24,30,36][i-1]);
-      var pd = "M "+(CX+rOuter)+" "+CY+" A "+rOuter+" "+rOuter+" 0 1 0 "+(CX-rOuter)+" "+CY+" A "+rOuter+" "+rOuter+" 0 1 0 "+(CX+rOuter)+" "+CY+" M "+(CX+rInner)+" "+CY+" A "+rInner+" "+rInner+" 0 1 1 "+(CX-rInner)+" "+CY+" A "+rInner+" "+rInner+" 0 1 1 "+(CX+rInner)+" "+CY;
-      svg.appendChild(el("path",{d:pd,fill:"rgba(255,255,255,0.02)","fill-rule":"evenodd"}));
+  // ── TH rings — only show rings up to active filter ──
+  var allRings=[
+    {th:6,  dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
+    {th:12, dash:"none", sw:"1.2", col:"#2a5080"},
+    {th:18, dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
+    {th:24, dash:"none", sw:"1.2", col:"#2a5080"},
+    {th:30, dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
+    {th:36, dash:"4,5",  sw:"0.7", col:"#1e3a5f"},
+  ];
+  var maxTH=effectiveMaxTH();
+  var ringDefs=allRings.filter(function(r){return r.th<=maxTH;});
+  // outermost ring is always the filter boundary — draw it solid and bright
+  if(ringDefs.length>0){
+    ringDefs[ringDefs.length-1].dash="none";
+    ringDefs[ringDefs.length-1].sw="1.5";
+    ringDefs[ringDefs.length-1].col="#3a70b0";
+  }
+  for(var ri=0;ri<ringDefs.length;ri++){
+    if(ri%2===0){
+      var rOuter=thToR(ringDefs[ri].th);
+      var rInner=ri===0?R_MIN:thToR(ringDefs[ri-1].th);
+      var pd="M "+(CX+rOuter)+" "+CY
+        +" A "+rOuter+" "+rOuter+" 0 1 0 "+(CX-rOuter)+" "+CY
+        +" A "+rOuter+" "+rOuter+" 0 1 0 "+(CX+rOuter)+" "+CY
+        +" M "+(CX+rInner)+" "+CY
+        +" A "+rInner+" "+rInner+" 0 1 1 "+(CX-rInner)+" "+CY
+        +" A "+rInner+" "+rInner+" 0 1 1 "+(CX+rInner)+" "+CY;
+      svg.appendChild(el("path",{d:pd,fill:"rgba(255,255,255,0.025)","fill-rule":"evenodd"}));
     }
-  });
+    var rd=ringDefs[ri];
+    var rv=thToR(rd.th);
+    svg.appendChild(el("circle",{cx:CX,cy:CY,r:rv,fill:"none",
+      stroke:rd.col,"stroke-width":rd.sw,"stroke-dasharray":rd.dash}));
+    svg.appendChild(txt(rd.th+"m",{x:CX+5,y:CY-rv+13,
+      "font-size":"9","font-family":"monospace",fill:"#3a6898",
+      "font-weight":rd.dash==="none"?"700":"400"}));
+  }
 
-  // center
+  // ── center disc ──
   svg.appendChild(el("circle",{cx:CX,cy:CY,r:R_MIN,fill:"#060f1c",stroke:"#2a5080","stroke-width":"1.2"}));
-  svg.appendChild(txt("NOW",{x:CX,y:CY+4,"text-anchor":"middle","dominant-baseline":"middle","font-size":"8","font-family":"monospace","font-weight":"700",fill:"#2a5080","letter-spacing":"2"}));
+  svg.appendChild(txt("NOW",{x:CX,y:CY+4,"text-anchor":"middle","dominant-baseline":"middle",
+    "font-size":"8","font-family":"monospace","font-weight":"700",fill:"#2a5080","letter-spacing":"2"}));
 
-  // spokes
-  WEDGES.forEach(function(w, i) {
-    var a = i * WA - Math.PI / 2;
-    svg.appendChild(el("line",{x1:CX+R_MIN*Math.cos(a),y1:CY+R_MIN*Math.sin(a),x2:CX+R_MAX*Math.cos(a),y2:CY+R_MAX*Math.sin(a),stroke:w.color,"stroke-width":"0.8","stroke-opacity":"0.45"}));
+  // ── spokes ──
+  WEDGES.forEach(function(w,i){
+    var a=i*WA-Math.PI/2;
+    svg.appendChild(el("line",{
+      x1:CX+R_MIN*Math.cos(a),y1:CY+R_MIN*Math.sin(a),
+      x2:CX+R_MAX*Math.cos(a),y2:CY+R_MAX*Math.sin(a),
+      stroke:w.color,"stroke-width":"0.8","stroke-opacity":"0.45"}));
   });
 
-  // wedge labels
-  WEDGES.forEach(function(w, i) {
-    var midA = i * WA - Math.PI / 2 + WA / 2;
-    var lx = CX + (R_MAX + 50) * Math.cos(midA);
-    var ly = CY + (R_MAX + 50) * Math.sin(midA);
-    var parts = w.label.indexOf(" & ") !== -1 ? w.label.split(" & ") : [w.label];
-    var lines = parts.length > 1 ? [parts[0]+" &", parts[1]] : [parts[0]];
-    var anchor = Math.cos(midA) > 0.18 ? "start" : Math.cos(midA) < -0.18 ? "end" : "middle";
-    lines.forEach(function(line, li) {
-      svg.appendChild(txt(line,{x:lx,y:ly+(li-(lines.length-1)/2)*14,"text-anchor":anchor,"dominant-baseline":"middle","font-size":"11","font-weight":"700",fill:w.color,"font-family":"inherit"}));
-    });
-  });
+  // ── wedge labels (multiline + avg) — drawn at R_MAX+45 ──
+  WEDGES.forEach(function(w,i){
+    var midA=i*WA-Math.PI/2+WA/2;
+    var lr=R_MAX+50;
+    var lx=CX+lr*Math.cos(midA), ly=CY+lr*Math.sin(midA);
+    var avg=wedgeAvg(w.id);
+    var avgStr=avg?" ("+avg+")":"";
 
-  // cascade lines
-  var pos = computePositions(effective);
-  var anyStressed = BASE_THEMES.some(function(t){ return sliderValues[t.id] > 0; });
-  if (anyStressed) {
-    PROPAGATION.forEach(function(p) {
-      if (sliderValues[p.from] <= 0) return;
-      var ps = pos[p.from], pt2 = pos[p.to];
-      if (!ps || !pt2) return;
-      var intensity = sliderValues[p.from] * p.scoreEffect;
-      svg.appendChild(el("line",{
-        x1:ps.x,y1:ps.y,x2:pt2.x,y2:pt2.y,
-        stroke:"rgba(255,180,60,"+Math.min(0.5, intensity * 0.7)+")",
-        "stroke-width": (intensity * 2).toFixed(1),
-        "stroke-dasharray":"5,4"
+    // split "X & Y" labels across two lines
+    var parts=w.label.indexOf(" & ")!==-1?w.label.split(" & "):[w.label];
+    var lines=parts.length>1?[parts[0]+" &",parts[1]+avgStr]:[parts[0]+avgStr];
+
+    var anchor=Math.cos(midA)>0.18?"start":Math.cos(midA)<-0.18?"end":"middle";
+    var lineH=14;
+    var g=el("g",{});
+    lines.forEach(function(line,li){
+      g.appendChild(txt(line,{
+        x:lx, y:ly+(li-(lines.length-1)/2)*lineH,
+        "text-anchor":anchor,"dominant-baseline":"middle",
+        "font-size":"11","font-weight":"700",fill:w.color,"font-family":"inherit"
       }));
     });
-  }
-
-  // bubbles
-  BASE_THEMES.forEach(function(t) {
-    var p = pos[t.id]; if (!p) return;
-    var br = scoreToBR(p.score);
-    var isStressed = sliderValues[t.id] > 0;
-    var isCascaded = effective[t.id].triggers && effective[t.id].triggers.length > 0;
-    var fill = scoreToFill(p.score);
-    var border = scoreToBorder(p.score);
-
-    var g = el("g", {style:"cursor:pointer"});
-
-    if (isStressed) {
-      g.appendChild(el("circle",{cx:p.x,cy:p.y,r:br+10,fill:border+"1a",stroke:border,"stroke-width":"1.5",filter:"url(#glow)"}));
-    } else if (isCascaded) {
-      g.appendChild(el("circle",{cx:p.x,cy:p.y,r:br+6,fill:"rgba(255,180,60,0.08)",stroke:"rgba(255,180,60,0.4)","stroke-width":"1","stroke-dasharray":"3,2"}));
-    }
-
-    g.appendChild(el("circle",{cx:p.x,cy:p.y,r:br,fill:fill,stroke:border,"stroke-width":"1.2",opacity:"0.95"}));
-    g.appendChild(txt(p.score.toFixed(1),{x:p.x,y:p.y+1,"text-anchor":"middle","dominant-baseline":"middle","font-size":br>14?"8":"7","font-weight":"700",fill:"#ffffff","font-family":"monospace"}));
-
-    // label
-    var dx = p.x - CX, dy = p.y - CY, dist = Math.sqrt(dx*dx+dy*dy)||1;
-    var nx = dx/dist, ny = dy/dist;
-    var lx = p.x + nx * (br + 10), ly = p.y + ny * (br + 10);
-    var anchor = nx > 0.2 ? "start" : nx < -0.2 ? "end" : "middle";
-    svg.appendChild(txt(t.short,{x:lx,y:ly,"text-anchor":anchor,"dominant-baseline":"middle","font-size":"7.5",fill:isStressed?wedgeColor(t.wedge):(isCascaded?"rgba(255,180,60,0.8)":"#4a6a80"),"font-weight":isStressed?"700":"400","font-family":"inherit"}));
-
-    g.addEventListener("mouseenter", function(e){ showTip(e, t, effective[t.id]); });
-    g.addEventListener("mouseleave", hideTip);
     svg.appendChild(g);
   });
-}
 
-// ── SLIDERS ───────────────────────────────────────────────────────────────────
-function buildSliders() {
-  var container = document.getElementById("sliders-content");
-  container.innerHTML = "";
+  // ── bubbles (first pass — circles only) ──
+  var pos=computePositions();
+  var visibleThemes=activeThemes();
 
-  var byWedge = {};
-  WEDGES.forEach(function(w){ byWedge[w.id] = []; });
-  BASE_THEMES.forEach(function(t){ if (byWedge[t.wedge]) byWedge[t.wedge].push(t); });
+  visibleThemes.forEach(function(t){
+    var p=pos[t.id];if(!p)return;
+    var br=scoreToBR(p.score);
+    var isSel=selectedId===t.id;
+    var fill=scoreToFill(p.score);
+    var border=scoreToBorder(p.score);
 
-  WEDGES.forEach(function(w) {
-    var themes = byWedge[w.id];
-    if (!themes.length) return;
-    var sec = document.createElement("div");
-    sec.className = "wedge-section";
-
-    var lbl = document.createElement("div");
-    lbl.className = "wedge-label";
-    lbl.style.color = w.color;
-    lbl.textContent = w.id + " — " + w.label;
-    sec.appendChild(lbl);
-
-    themes.forEach(function(t) {
-      var row = document.createElement("div");
-      row.className = "slider-row";
-
-      var meta = document.createElement("div");
-      meta.className = "slider-meta";
-
-      var nameEl = document.createElement("div");
-      nameEl.className = "slider-name";
-      nameEl.textContent = t.short;
-
-      var valEl = document.createElement("div");
-      valEl.className = "slider-val";
-      valEl.id = "val-" + t.id;
-      valEl.style.color = w.color;
-      updateSliderVal(valEl, t, 0);
-
-      meta.appendChild(nameEl);
-      meta.appendChild(valEl);
-      row.appendChild(meta);
-
-      var track = document.createElement("div");
-      track.className = "slider-track";
-
-      var input = document.createElement("input");
-      input.type = "range";
-      input.min = "0";
-      input.max = "100";
-      input.value = "0";
-      input.id = "slider-" + t.id;
-      input.style.setProperty("accent-color", w.color);
-      input.addEventListener("input", function() {
-        var v = parseInt(input.value) / 100;
-        sliderValues[t.id] = v;
-        updateSliderVal(valEl, t, v);
-        update();
-      });
-      track.appendChild(input);
-
-      // baseline tick at 0
-      var tick = document.createElement("div");
-      tick.className = "baseline-tick";
-      tick.style.left = "0%";
-      track.appendChild(tick);
-
-      row.appendChild(track);
-      sec.appendChild(row);
-    });
-
-    container.appendChild(sec);
-  });
-}
-
-function updateSliderVal(el2, t, v) {
-  if (v === 0) {
-    el2.textContent = "Base (" + t.base.score.toFixed(1) + ")";
-    el2.style.opacity = "0.5";
-  } else {
-    var effScore = t.base.score + (t.worst.score - t.base.score) * v;
-    var effTH = t.base.th - (t.base.th - t.worst.th) * v;
-    el2.textContent = effScore.toFixed(1) + " / " + Math.round(effTH) + "m";
-    el2.style.opacity = "1";
-  }
-}
-
-// ── RIPPLE GRID ───────────────────────────────────────────────────────────────
-function renderRipple(effective) {
-  var grid = document.getElementById("ripple-grid");
-  grid.innerHTML = "";
-
-  BASE_THEMES.forEach(function(t) {
-    var eff = effective[t.id];
-    var baseScore = t.base.score;
-    var newScore = eff.score;
-    var baseTH = t.base.th;
-    var newTH = eff.th;
-    var scoreDelta = Math.round((newScore - baseScore) * 10) / 10;
-    var thDelta = newTH - baseTH;
-    var isDirectlyStressed = sliderValues[t.id] > 0;
-    var isCascaded = eff.triggers && eff.triggers.length > 0 && !isDirectlyStressed;
-    var isChanged = Math.abs(scoreDelta) >= 0.05 || Math.abs(thDelta) >= 1;
-
-    var card = document.createElement("div");
-    card.className = "ripple-card" + (isChanged ? (scoreDelta > 0 ? " moved-up" : " moved-down") : "") + (isDirectlyStressed ? " active" : "");
-
-    var wc = wedgeColor(t.wedge);
-
-    var head = document.createElement("div");
-    head.className = "rc-head";
-
-    var name = document.createElement("div");
-    name.className = "rc-name";
-    name.textContent = t.short;
-    if (isDirectlyStressed) name.style.color = wc;
-    else if (isCascaded) name.style.color = "rgba(255,180,60,0.9)";
-
-    var badge = document.createElement("div");
-    badge.className = "rc-wedge";
-    badge.textContent = t.wedge;
-    badge.style.background = wc + "20";
-    badge.style.color = wc;
-
-    head.appendChild(name);
-    head.appendChild(badge);
-    card.appendChild(head);
-
-    var scores = document.createElement("div");
-    scores.className = "rc-scores";
-
-    var baseEl = document.createElement("span");
-    baseEl.className = "rc-base";
-    baseEl.textContent = baseScore.toFixed(1);
-
-    var arrow = document.createElement("span");
-    arrow.className = "rc-arrow";
-    arrow.textContent = "→";
-
-    var newEl = document.createElement("span");
-    newEl.className = "rc-new";
-    newEl.textContent = newScore.toFixed(1);
-    if (scoreDelta > 0.05) newEl.style.color = "#ff5555";
-    else if (scoreDelta < -0.05) newEl.style.color = "#30d880";
-    else newEl.style.color = "#4a6a88";
-
-    var delta = document.createElement("span");
-    delta.className = "rc-delta";
-    if (Math.abs(scoreDelta) >= 0.05) {
-      delta.textContent = (scoreDelta > 0 ? "+" : "") + scoreDelta.toFixed(1);
-      delta.style.color = scoreDelta > 0 ? "#ff5555" : "#30d880";
-    } else {
-      delta.textContent = "—";
-      delta.style.color = "#2a4050";
+    var g=el("g",{style:"cursor:pointer"});
+    if(isSel){
+      g.appendChild(el("circle",{cx:p.x,cy:p.y,r:br+12,
+        fill:border+"1a",stroke:border,"stroke-width":"1.5",filter:"url(#halo)"}));
     }
+    g.appendChild(el("circle",{cx:p.x,cy:p.y,r:br,
+      fill:fill,stroke:isSel?"#ffffff":border,
+      "stroke-width":isSel?"2":"1.2",
+      filter:isSel?"url(#glow)":"none",opacity:"0.95"}));
+    // score inside
+    g.appendChild(txt(p.score.toFixed(1),{
+      x:p.x,y:p.y+1,"text-anchor":"middle","dominant-baseline":"middle",
+      "font-size":br>14?"8":"7","font-weight":"700",fill:"#ffffff","font-family":"monospace"}));
 
-    scores.appendChild(baseEl);
-    scores.appendChild(arrow);
-    scores.appendChild(newEl);
-    scores.appendChild(delta);
-    card.appendChild(scores);
-
-    if (Math.abs(thDelta) >= 1) {
-      var thLine = document.createElement("div");
-      thLine.className = "rc-th-change";
-      thLine.textContent = "TH: " + baseTH + "m → " + newTH + "m (" + (thDelta > 0 ? "+" : "") + thDelta + "m)";
-      thLine.style.color = thDelta < 0 ? "#ff8855" : "#30d880";
-      card.appendChild(thLine);
-    }
-
-    grid.appendChild(card);
-  });
-}
-
-// ── NARRATIVE ─────────────────────────────────────────────────────────────────
-function renderNarrative(effective) {
-  var box = document.getElementById("narrative-content");
-  var stressedThemes = BASE_THEMES.filter(function(t){ return sliderValues[t.id] > 0; });
-
-  if (!stressedThemes.length) {
-    box.innerHTML = '<span class="no-change">No stress applied. Adjust a theme slider to see cascade effects.</span>';
-    return;
-  }
-
-  var lines = [];
-  stressedThemes.forEach(function(t) {
-    var v = sliderValues[t.id];
-    var pct = Math.round(v * 100);
-    var stressLabel = v < 0.33 ? "mild deterioration" : v < 0.66 ? "significant deterioration" : "severe stress / near-worst";
-    lines.push('<div class="trigger-line up"><strong style="color:'+wedgeColor(t.wedge)+'">'+t.short+'</strong> — '+stressLabel+' ('+pct+'% toward worst case)');
-
-    // find cascades
-    var cascades = PROPAGATION.filter(function(p){ return p.from === t.id; });
-    cascades.forEach(function(c) {
-      var tgt = BASE_THEMES.filter(function(x){ return x.id === c.to; })[0];
-      if (!tgt) return;
-      var intensity = v * c.scoreEffect;
-      if (intensity < 0.1) return;
-      lines.push('&nbsp;&nbsp;↳ <em style="color:#8aa8c8">'+c.narrative+' → <strong>'+tgt.short+'</strong> score +'+((BASE_THEMES.filter(function(x){return x.id===c.to;})[0].worst.score - BASE_THEMES.filter(function(x){return x.id===c.to;})[0].base.score)*v*c.scoreEffect).toFixed(1)+'</em>');
-    });
-    lines.push('</div>');
+    g.addEventListener("mouseenter",function(e){showTip(e,t,p);});
+    g.addEventListener("mouseleave",hideTip);
+    g.addEventListener("click",function(){selectTheme(t.id===selectedId?null:t.id);});
+    svg.appendChild(g);
   });
 
-  box.innerHTML = lines.join('');
-}
+  // ── labels (second pass — collision-aware, no background box) ──
+  var LPAD=8; // minimum gap between label and bubble edge
+  var LH=9, LW=58;
 
-// ── TOOLTIP ───────────────────────────────────────────────────────────────────
-function showTip(e, t, eff) {
-  var tip = document.getElementById("tooltip");
-  var delta = eff.score - t.base.score;
-  tip.innerHTML = "<b style='color:#fff'>" + t.name + "</b><br>"
-    + "<span style='color:#8aa8c8;font-size:10px'>Score: " + eff.score.toFixed(1) + "/5"
-    + (Math.abs(delta) >= 0.05 ? " <span style='color:" + (delta > 0 ? "#ff5555" : "#30d880") + "'>(base: " + t.base.score.toFixed(1) + ")</span>" : "")
-    + " &nbsp;·&nbsp; TH: " + eff.th + "m</span>";
-  tip.style.display = "block";
-  moveTip(e);
-}
-function hideTip() { document.getElementById("tooltip").style.display = "none"; }
-document.addEventListener("mousemove", moveTip);
-function moveTip(e) {
-  var tip = document.getElementById("tooltip");
-  if (tip.style.display === "none") return;
-  tip.style.left = (e.clientX + 14) + "px";
-  tip.style.top = (e.clientY - 8) + "px";
-}
-
-// ── CALIBRATION PANEL ─────────────────────────────────────────────────────────
-var DEFAULT_PROPAGATION = PROPAGATION.map(function(p){
-  return {from:p.from, to:p.to, scoreEffect:p.scoreEffect, thEffect:p.thEffect, narrative:p.narrative};
-});
-
-function themeShort(id) {
-  var t = BASE_THEMES.filter(function(x){ return x.id === id; })[0];
-  return t ? t.short : id;
-}
-
-function openCal() {
-  buildCalPanel();
-  document.getElementById("cal-overlay").classList.add("open");
-}
-function closeCal() {
-  document.getElementById("cal-overlay").classList.remove("open");
-  update();
-}
-
-function buildCalPanel() {
-  var body = document.getElementById("cal-body");
-  body.innerHTML = "";
-
-  // group by "from"
-  var groups = {};
-  var groupOrder = [];
-  PROPAGATION.forEach(function(p) {
-    if (!groups[p.from]) { groups[p.from] = []; groupOrder.push(p.from); }
-    groups[p.from].push(p);
-  });
-
-  groupOrder.forEach(function(fromId) {
-    var src = BASE_THEMES.filter(function(t){ return t.id === fromId; })[0];
-    if (!src) return;
-    var wc = wedgeColor(src.wedge);
-
-    var glabel = document.createElement("div");
-    glabel.className = "cal-group-label";
-    glabel.style.color = wc;
-    glabel.textContent = src.wedge + " — " + src.short;
-    body.appendChild(glabel);
-
-    groups[fromId].forEach(function(p, pi) {
-      var tgt = BASE_THEMES.filter(function(t){ return t.id === p.to; })[0];
-      if (!tgt) return;
-
-      var row = document.createElement("div");
-      row.className = "cal-row";
-
-      // From label
-      var fromEl = document.createElement("div");
-      fromEl.style.gridColumn = "1";
-      fromEl.innerHTML = '<div class="cal-from" style="color:'+wc+'">→ '+tgt.short+'</div><div class="cal-to">'+tgt.wedge+'</div>';
-      row.appendChild(fromEl);
-
-      // Score effect slider
-      var sgEl = buildCalSlider(p, "scoreEffect", "Score effect", "#4a9eff", false);
-      row.appendChild(sgEl);
-
-      // TH effect slider
-      var thEl = buildCalSlider(p, "thEffect", "TH compression", "#ffc040", true);
-      row.appendChild(thEl);
-
-      // Narrative (shown on hover)
-      var narEl = document.createElement("div");
-      narEl.className = "cal-narrative";
-      narEl.textContent = p.narrative;
-      row.appendChild(narEl);
-
-      // Delete btn
-      var delBtn = document.createElement("button");
-      delBtn.className = "cal-delete";
-      delBtn.title = "Remove this link";
-      delBtn.textContent = "✕";
-      delBtn.onclick = (function(fromId2, toId) {
-        return function() {
-          PROPAGATION = PROPAGATION.filter(function(x){ return !(x.from===fromId2 && x.to===toId); });
-          buildCalPanel();
-          update();
-        };
-      })(p.from, p.to);
-      row.appendChild(delBtn);
-
-      body.appendChild(row);
-    });
-  });
-}
-
-function buildCalSlider(p, key, label, color, isTH) {
-  var wrap = document.createElement("div");
-  wrap.className = "cal-slider-group";
-
-  var lbl = document.createElement("div");
-  lbl.className = "cal-slider-label";
-  lbl.innerHTML = label + ' <span id="cv-'+p.from+'-'+p.to+'-'+key+'">' + p[key].toFixed(2) + '</span>';
-  wrap.appendChild(lbl);
-
-  var inp = document.createElement("input");
-  inp.type = "range";
-  inp.className = "cal-range" + (isTH ? " th-range" : "");
-  inp.min = "0"; inp.max = "100";
-  inp.value = Math.round(p[key] * 100);
-  inp.style.accentColor = color;
-  inp.addEventListener("input", (function(p2, key2) {
-    return function() {
-      var v = parseInt(inp.value) / 100;
-      p2[key2] = v;
-      var display = document.getElementById("cv-"+p2.from+"-"+p2.to+"-"+key2);
-      if (display) display.textContent = v.toFixed(2);
-      update();
+  // initial position: push label outward from center past the bubble edge
+  var labelData=visibleThemes.map(function(t){
+    var p=pos[t.id];if(!p)return null;
+    var br=scoreToBR(p.score);
+    var dx=p.x-CX, dy=p.y-CY;
+    var dist=Math.sqrt(dx*dx+dy*dy)||1;
+    var nx=dx/dist, ny=dy/dist;
+    return {
+      id:t.id,short:t.short,
+      bx:p.x,by:p.y,br:br,
+      lx:p.x+nx*(br+LPAD+LH/2),
+      ly:p.y+ny*(br+LPAD+LH/2),
+      score:p.score
     };
-  })(p, key));
-  wrap.appendChild(inp);
-  return wrap;
-}
+  }).filter(Boolean);
 
-function resetCalibration() {
-  PROPAGATION = DEFAULT_PROPAGATION.map(function(p){
-    return {from:p.from, to:p.to, scoreEffect:p.scoreEffect, thEffect:p.thEffect, narrative:p.narrative};
+  // iterative repulsion
+  for(var iter=0;iter<40;iter++){
+    for(var a=0;a<labelData.length;a++){
+      for(var b=a+1;b<labelData.length;b++){
+        var la=labelData[a],lb=labelData[b];
+        var dx=la.lx-lb.lx,dy=la.ly-lb.ly;
+        var oxW=LW+4-Math.abs(dx), oxH=LH+4-Math.abs(dy);
+        if(oxW>0&&oxH>0){
+          var f=1.5;
+          var len=Math.sqrt(dx*dx+dy*dy)||0.5;
+          la.lx+=f*dx/len; la.ly+=f*dy/len;
+          lb.lx-=f*dx/len; lb.ly-=f*dy/len;
+        }
+      }
+      // repel from bubble centers (all bubbles, not just own)
+      visibleThemes.forEach(function(t2){
+        var p2=pos[t2.id];if(!p2)return;
+        var br2=scoreToBR(p2.score);
+        var dx2=labelData[a].lx-p2.x, dy2=labelData[a].ly-p2.y;
+        var d2=Math.sqrt(dx2*dx2+dy2*dy2)||0.5;
+        var minD=br2+LH;
+        if(d2<minD){
+          var push=(minD-d2)*0.6;
+          labelData[a].lx+=push*dx2/d2;
+          labelData[a].ly+=push*dy2/d2;
+        }
+      });
+    }
+  }
+
+  // draw labels
+  labelData.forEach(function(ld){
+    var isSel=selectedId===ld.id;
+    var wCol=wedgeColor(THEMES.filter(function(t){return t.id===ld.id;})[0].wedge);
+    var lCol=isSel?wCol:"#8aa8c8";
+    // thin connector line from bubble edge to label
+    var ddx=ld.lx-ld.bx,ddy=ld.ly-ld.by;
+    var ddist=Math.sqrt(ddx*ddx+ddy*ddy)||1;
+    var ex=ld.bx+(ddx/ddist)*ld.br, ey=ld.by+(ddy/ddist)*ld.br;
+    svg.appendChild(el("line",{
+      x1:ex,y1:ey,x2:ld.lx,y2:ld.ly,
+      stroke:lCol,"stroke-width":"0.6","stroke-opacity":"0.45"
+    }));
+    svg.appendChild(txt(ld.short,{
+      x:ld.lx,y:ld.ly,
+      "text-anchor":"middle","dominant-baseline":"middle",
+      "font-size":"7.5",fill:lCol,
+      "font-weight":isSel?"700":"500","font-family":"inherit"
+    }));
   });
-  buildCalPanel();
-  update();
 }
 
-// ── MASTER UPDATE ─────────────────────────────────────────────────────────────
-function update() {
-  var effective = computeEffective();
+// ── TOOLTIP ────────────────────────────────────────────────────────────────────
+function showTip(e,t,p){
+  var d=t[scenario];
+  var tip=document.getElementById("tooltip");
+  tip.innerHTML="<b style='color:#fff'>"+t.name+"</b><br>"
+    +"<span style='color:#8aa8c8;font-size:10px'>Score: "+d.score.toFixed(1)+"/5 &nbsp;·&nbsp; TH: "+d.thLabel+"</span>";
+  tip.style.display="block";moveTip(e);
+}
+function hideTip(){document.getElementById("tooltip").style.display="none";}
+document.addEventListener("mousemove",moveTip);
+function moveTip(e){
+  var tip=document.getElementById("tooltip");
+  if(tip.style.display==="none")return;
+  tip.style.left=(e.clientX+14)+"px";tip.style.top=(e.clientY-8)+"px";
+}
+
+// ── SPIDER ─────────────────────────────────────────────────────────────────────
+function buildSpider(t){
+  var sz=210,cx=105,cy=105,r=75,n=INDICATORS.length,max=5;
+  var ang=function(i){return(Math.PI*2*i)/n-Math.PI/2;};
+  var pt=function(v,i){var a=ang(i),d=(v/max)*r;return[cx+d*Math.cos(a),cy+d*Math.sin(a)];};
+  var ptStr=function(sc){return sc.map(function(v,i){var p=pt(v,i);return p[0]+","+p[1];}).join(" ");};
+  var wc=wedgeColor(t.wedge);
+  var svg2=document.createElementNS(NS,"svg");
+  svg2.setAttribute("width",sz);svg2.setAttribute("height",sz);svg2.setAttribute("viewBox","0 0 "+sz+" "+sz);
+  [1,2,3,4,5].forEach(function(lv){
+    var pts=[];for(var i=0;i<n;i++){var p=pt(lv,i);pts.push(p[0]+","+p[1]);}
+    var poly=document.createElementNS(NS,"polygon");
+    poly.setAttribute("points",pts.join(" "));poly.setAttribute("fill","none");
+    poly.setAttribute("stroke",lv===5?"#2a4060":"#162030");poly.setAttribute("stroke-width",lv===5?"1":"0.5");
+    svg2.appendChild(poly);
+  });
+  for(var i=0;i<n;i++){
+    var p=pt(5,i);var ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",cx);ln.setAttribute("y1",cy);ln.setAttribute("x2",p[0]);ln.setAttribute("y2",p[1]);
+    ln.setAttribute("stroke","#162030");ln.setAttribute("stroke-width","0.5");svg2.appendChild(ln);
+  }
+  var pb=document.createElementNS(NS,"polygon");
+  pb.setAttribute("points",ptStr(t.base.scores));pb.setAttribute("fill",wc+"22");
+  pb.setAttribute("stroke",wc);pb.setAttribute("stroke-width","1.5");pb.setAttribute("stroke-dasharray","4,2");
+  svg2.appendChild(pb);
+  var pw=document.createElementNS(NS,"polygon");
+  pw.setAttribute("points",ptStr(t.worst.scores));pw.setAttribute("fill",wc+"44");
+  pw.setAttribute("stroke",wc);pw.setAttribute("stroke-width","2");svg2.appendChild(pw);
+  t.base.scores.forEach(function(v,i){var p=pt(v,i);var c=document.createElementNS(NS,"circle");c.setAttribute("cx",p[0]);c.setAttribute("cy",p[1]);c.setAttribute("r","2.5");c.setAttribute("fill",wc);c.setAttribute("opacity","0.5");svg2.appendChild(c);});
+  t.worst.scores.forEach(function(v,i){var p=pt(v,i);var c=document.createElementNS(NS,"circle");c.setAttribute("cx",p[0]);c.setAttribute("cy",p[1]);c.setAttribute("r","3");c.setAttribute("fill",wc);svg2.appendChild(c);});
+  INDICATORS.forEach(function(lbl,i){
+    var a=ang(i),d=r+20;
+    var t2=document.createElementNS(NS,"text");
+    t2.setAttribute("x",cx+d*Math.cos(a));t2.setAttribute("y",cy+d*Math.sin(a));
+    t2.setAttribute("text-anchor","middle");t2.setAttribute("dominant-baseline","middle");
+    t2.setAttribute("font-size","7.5");t2.setAttribute("fill","#4a6a80");t2.setAttribute("font-family","inherit");
+    t2.textContent=lbl;svg2.appendChild(t2);
+  });
+  return svg2;
+}
+
+// ── PANEL ──────────────────────────────────────────────────────────────────────
+function renderPanel(){
+  var panel=document.getElementById("panel");
+  var main=document.getElementById("main");
+  if(!selectedId){panel.classList.remove("visible");main.classList.remove("with-panel");return;}
+  var t=null;for(var i=0;i<THEMES.length;i++)if(THEMES[i].id===selectedId){t=THEMES[i];break;}
+  if(!t)return;
+  panel.classList.add("visible");main.classList.add("with-panel");
+  var wc=wedgeColor(t.wedge);
+  var wl=WEDGES.filter(function(w){return w.id===t.wedge;})[0].label;
+  var db=t.base,dw=t.worst;
+  var delta=dw.score-db.score;
+  var dStr=delta>0?"+"+delta.toFixed(1)+" in worst case":delta===0?"Score unchanged — TH compresses":delta.toFixed(1)+" (upside attenuates)";
+  var dCol=delta>0?"#ff4040":delta===0?"#ffc040":"#40d890";
+  var dBg=delta>0?"#3a0a0a12":delta===0?"#3a2a0012":"#0a2a1812";
+  var dBrd=delta>0?"#ff404030":delta===0?"#ffc04030":"#40d89030";
+  var html='<div class="panel-top-row"><div>'
+    +'<div class="panel-cat" style="color:'+wc+'">'+wl+' trigger</div>'
+    +'<div class="panel-title">'+t.name+'</div></div>'
+    +'<button class="panel-close" onclick="selectTheme(null)">✕</button></div>';
+  html+='<div class="score-grid">';
+  [["Base Case",db,false],["Worst Case",dw,true]].forEach(function(row){
+    var lbl=row[0],d=row[1],hl=row[2];
+    html+='<div class="score-card" style="background:'+(hl?wc+"18":"#0d1e33")+';border:1px solid '+(hl?wc+"50":"#1a3050")+'">'
+      +'<div class="sc-lbl">'+lbl+'</div>'
+      +'<div class="sc-val" style="color:'+scoreColorPanel(d.score)+'">'+d.score.toFixed(1)+'</div>'
+      +'<div class="sc-th">TH: '+d.thLabel+'</div></div>';
+  });
+  html+='</div>';
+  html+='<div class="delta-badge" style="background:'+dBg+';border:1px solid '+dBrd+';color:'+dCol+'">'+dStr+'</div>';
+  html+='<div class="note-box"><b>Base: </b>'+(t.baseNote||"—")+'</div>';
+  html+='<div class="note-box" style="border-color:#ff404022"><b>Worst: </b>'+(t.worstNote||"—")+'</div>';
+  html+='<div class="spider-label">Impact profile — dashed = base &nbsp;·&nbsp; solid = worst</div>';
+  html+='<div id="spider-wrap" style="display:flex;justify-content:center"></div>';
+  html+='<div class="indicator-table"><div class="ind-header"><span>Indicator</span><span style="text-align:center">Base</span><span style="text-align:center">Worst</span><span style="text-align:center">Δ</span></div>';
+  INDICATORS.forEach(function(ind,idx){
+    var sb=db.scores[idx]||0,sw=dw.scores[idx]||0,d=sw-sb;
+    var dc=d>0?"#ff4040":d<0?"#40d890":"#2a4050";
+    html+='<div class="ind-row"><span class="ind-name">'+ind+'</span>'
+      +'<span class="ind-val" style="color:'+scoreColorPanel(sb)+'">'+sb+'</span>'
+      +'<span class="ind-val" style="color:'+scoreColorPanel(sw)+'">'+sw+'</span>'
+      +'<span class="ind-delta" style="color:'+dc+'">'+(d>0?"+"+d:d===0?"=":d)+'</span></div>';
+  });
+  html+='</div>';
+  panel.innerHTML=html;
+  var wrap=document.getElementById("spider-wrap");
+  if(wrap)wrap.appendChild(buildSpider(t));
+}
+
+// ── SELECT / SCENARIO / ZOOM ────────────────────────────────────────────────────
+function selectTheme(id){selectedId=id;renderPanel();drawRadar();}
+
+function setScenario(s){
+  scenario=s;
+  document.getElementById("btn-base").className="toggle-btn"+(s==="base"?" active-base":"");
+  document.getElementById("btn-worst").className="toggle-btn"+(s==="worst"?" active-worst":"");
+  var badge=document.getElementById("scenario-badge");
+  if(s==="worst"){badge.style.display="block";badge.style.color="#ff4040";badge.style.border="1px solid #ff404033";badge.style.background="#ff40400a";badge.textContent="Worst case active";}
+  else badge.style.display="none";
+  renderPanel();drawRadar();
+}
+// ── TH FILTER ──────────────────────────────────────────────────────────────────
+function setThFilter(val){
+  thFilter=val;
+  ['all',6,12,18,24,30,36].forEach(function(v){
+    var btn=document.getElementById('thf-'+(v==='all'?'all':v));
+    if(btn) btn.className='th-filter-btn'+(v===val?' active':'');
+  });
+  if(selectedId){
+    var t=THEMES.filter(function(t){return t.id===selectedId;})[0];
+    if(t && thFilter!=='all' && t[scenario].th>parseInt(thFilter)){
+      selectedId=null; renderPanel();
+    }
+  }
   drawRadar();
-  renderRipple(effective);
-  renderNarrative(effective);
 }
 
-function resetAll() {
-  BASE_THEMES.forEach(function(t) {
-    sliderValues[t.id] = 0;
-    var slider = document.getElementById("slider-" + t.id);
-    if (slider) slider.value = 0;
-    var val = document.getElementById("val-" + t.id);
-    if (val) updateSliderVal(val, t, 0);
+// ── EXCEL UPLOAD ───────────────────────────────────────────────────────────────
+var REQUIRED_COLS=["trigger","theme_name","score_base","score_worst","th_base_months","th_worst_months"];
+var IND_COLS_BASE =["ind_1_base","ind_2_base","ind_3_base","ind_4_base","ind_5_base","ind_6_base","ind_7_base"];
+var IND_COLS_WORST=["ind_1_worst","ind_2_worst","ind_3_worst","ind_4_worst","ind_5_worst","ind_6_worst","ind_7_worst"];
+
+function handleFileUpload(e){
+  var file=e.target.files[0];e.target.value="";if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var wb=XLSX.read(ev.target.result,{type:"array"});
+      var sheetName="Upload Ready";
+      if(wb.SheetNames.indexOf(sheetName)===-1) sheetName=wb.SheetNames[0];
+      var ws=wb.Sheets[sheetName];
+      validateAndLoad(XLSX.utils.sheet_to_json(ws,{defval:""}));
+    }catch(err){showError(["Could not parse file: "+err.message]);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function validateAndLoad(rows){
+  var errors=[];
+  if(!rows.length){showError(["File is empty."]);return;}
+  var cols=Object.keys(rows[0]);
+  var missing=REQUIRED_COLS.filter(function(c){return cols.indexOf(c)===-1;});
+  if(missing.length){showError(["Missing required columns: "+missing.join(", "),"Expected: "+REQUIRED_COLS.join(", ")]);return;}
+  var hasIndBase =IND_COLS_BASE.every(function(c){return cols.indexOf(c)!==-1;});
+  var hasIndWorst=IND_COLS_WORST.every(function(c){return cols.indexOf(c)!==-1;});
+  rows.forEach(function(row,i){
+    var rn="Row "+(i+2)+": ";
+    if(VALID_TRIGGERS.indexOf(String(row.trigger||"").trim().toUpperCase())===-1)
+      errors.push(rn+"invalid trigger '"+row.trigger+"'. Must be: "+VALID_TRIGGERS.join(", "));
+    if(!row.theme_name||!String(row.theme_name).trim()) errors.push(rn+"theme_name is empty.");
+    var sb=parseFloat(row.score_base),sw=parseFloat(row.score_worst);
+    var thb=parseInt(row.th_base_months),thw=parseInt(row.th_worst_months);
+    if(isNaN(sb)||sb<1||sb>5) errors.push(rn+"score_base '"+row.score_base+"' must be 1.0–5.0.");
+    if(isNaN(sw)||sw<1||sw>5) errors.push(rn+"score_worst '"+row.score_worst+"' must be 1.0–5.0.");
+    if(isNaN(thb)||thb<=0) errors.push(rn+"th_base_months must be a positive integer.");
+    if(isNaN(thw)||thw<=0) errors.push(rn+"th_worst_months must be a positive integer.");
+    if(hasIndBase) IND_COLS_BASE.forEach(function(c){
+      var v=parseFloat(row[c]);
+      if(isNaN(v)||v<1||v>5) errors.push(rn+c+" '"+row[c]+"' must be 1–5.");
+    });
+    if(hasIndWorst) IND_COLS_WORST.forEach(function(c){
+      var v=parseFloat(row[c]);
+      if(isNaN(v)||v<1||v>5) errors.push(rn+c+" '"+row[c]+"' must be 1–5.");
+    });
   });
-  update();
+  if(errors.length){showError(errors);return;}
+  closeError();
+  THEMES=rows.map(function(row,i){
+    var sb=parseFloat(row.score_base),sw=parseFloat(row.score_worst);
+    var thb=Math.min(parseInt(row.th_base_months),36);
+    var thw=Math.min(parseInt(row.th_worst_months),36);
+    var bscores=hasIndBase ?IND_COLS_BASE.map(function(c){return parseFloat(row[c])||0;}):[0,0,0,0,0,0,0];
+    var wscores=hasIndWorst?IND_COLS_WORST.map(function(c){return parseFloat(row[c])||0;}):[0,0,0,0,0,0,0];
+    var shortName=String(row.theme_name).trim();
+    return{id:"U"+(i+1),wedge:String(row.trigger).trim().toUpperCase(),upside:sw<sb,
+      name:shortName,short:shortName.substring(0,22),
+      base:{score:sb,th:thb,thLabel:thb+"m",scores:bscores},
+      worst:{score:sw,th:thw,thLabel:thw+"m",scores:wscores},
+      baseNote:"Imported from Excel.",worstNote:"Imported from Excel."};
+  });
+  selectedId=null;renderPanel();drawRadar();renderLegend();
+}
+function showError(errs){
+  document.getElementById("error-list").innerHTML=errs.map(function(e){return'<div class="err-item">• '+e+'</div>';}).join("");
+  document.getElementById("error-panel").style.display="block";
+}
+function closeError(){document.getElementById("error-panel").style.display="none";}
+
+// ── LEGEND ─────────────────────────────────────────────────────────────────────
+function renderLegend(){
+  var leg=document.getElementById("wedge-legend");
+  leg.innerHTML=[1,2,3,4,5].map(function(s){
+    var br=scoreToBR(s), sz=(BR_MAX+4)*2, cx2=sz/2;
+    return '<div class="leg-item">'
+      +'<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 '+sz+' '+sz+'" style="flex-shrink:0">'
+      +'<circle cx="'+cx2+'" cy="'+cx2+'" r="'+br+'" fill="'+SCORE_COLORS[s].fill+'" stroke="'+SCORE_COLORS[s].border+'" stroke-width="1.2"/>'
+      +'<text x="'+cx2+'" y="'+(cx2+1)+'" text-anchor="middle" dominant-baseline="middle" font-size="'+(br>12?"8":"7")+'" font-weight="700" fill="#fff" font-family="monospace">'+s+'</text>'
+      +'</svg>'
+      +'<span style="color:#4a6080;font-size:9px">'+SCORE_COLORS[s].label+'</span>'
+      +'</div>';
+  }).join('<div class="leg-sep"></div>');
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-buildSliders();
-update();
-</script>
+// ── RADAR PINCH / CTRL+SCROLL ZOOM ────────────────────────────────────────────
+var radarScale = 1.0;
+var SCALE_MIN = 0.4, SCALE_MAX = 3.0;
 
-</body>
+function applyRadarScale(delta) {
+  radarScale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, radarScale + delta));
+  document.getElementById("radar-scale-wrap").style.transform =
+    "scale(" + radarScale.toFixed(3) + ")";
+}
+
+// ctrl + mouse wheel
+document.getElementById("radar-box").addEventListener("wheel", function(e) {
+  if (!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault();
+  var delta = e.deltaY < 0 ? 0.1 : -0.1;
+  applyRadarScale(delta);
+}, { passive: false });
+
+// pinch on touch devices
+(function() {
+  var lastDist = null;
+  var wrap = document.getElementById("radar-box");
+
+  wrap.addEventListener("touchstart", function(e) {
+    if (e.touches.length === 2) {
+      var dx = e.touches[0].clientX - e.touches[1].clientX;
+      var dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastDist = Math.sqrt(dx*dx + dy*dy);
+    }
+  }, { passive: true });
+
+  wrap.addEventListener("touchmove", function(e) {
+    if (e.touches.length !== 2 || lastDist === null) return;
+    e.preventDefault();
+    var dx = e.touches[0].clientX - e.touches[1].clientX;
+    var dy = e.touches[0].clientY - e.touches[1].clientY;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+    var ratio = dist / lastDist;
+    // apply proportional scale change
+    var newScale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, radarScale * ratio));
+    radarScale = newScale;
+    document.getElementById("radar-scale-wrap").style.transform =
+      "scale(" + radarScale.toFixed(3) + ")";
+    lastDist = dist;
+  }, { passive: false });
+
+  wrap.addEventListener("touchend", function() { lastDist = null; }, { passive: true });
+})();
+
+// ── SCENARIO MODAL ─────────────────────────────────────────────────────────────
+function openScenarioModal(){
+  document.getElementById("scenario-modal-overlay").classList.add("open");
+}
+function closeScenarioModal(){
+  document.getElementById("scenario-modal-overlay").classList.remove("open");
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+renderLegend();
+drawRadar();
+</script></body>
 </html>
